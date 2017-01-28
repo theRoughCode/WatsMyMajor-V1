@@ -63,5 +63,5 @@ app.get('/wat', function(req, res){
 })
 
 app.get('/', function(req, res){
-  waterloo.getPrereqs('CS', '245');
+  //waterloo.getPrereqs('CS', '245');
 })

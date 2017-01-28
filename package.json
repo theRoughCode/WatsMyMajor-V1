@@ -2,6 +2,7 @@
   "name": "express-parameters",
   "main": "server.js",
   "dependencies": {
+    "async": "^2.1.4",
     "body-parser": "^1.16.0",
     "express": "~4.10.2",
     "promise": "^7.1.1",
