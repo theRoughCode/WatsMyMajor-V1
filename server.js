@@ -71,7 +71,9 @@ app.get('/wat/:course/:number', function(req, res){
       prereqs: output[0],
       coreqs: output[1],
       antireqs: output[2],
-      string: output[3]
+      crosslistings: output[3],
+      terms: output[4],
+      string: output[5]
     }));
 })
 

@@ -72,22 +72,33 @@ function getRequisites(subject, course_number, callback) {
   async.parallel([
     callback => getPrereqs(subject, course_number, reqs => callback(null, reqs)),
     callback => getCoreqs(subject, course_number, reqs => callback(null, reqs)),
-    callback => getAntireqs(subject, course_number, reqs => callback(null, reqs))
+    callback => getAntireqs(subject, course_number, reqs => callback(null, reqs)),
+    callback => getCrosslistings(subject, course_number, reqs => callback(null, reqs)),
+    callback => getTermsOffered(subject, course_number, reqs => callback(null, reqs))
   ], function(err, results) {
     if(err) console.error(err);
     var string = ("Course: " + subject + course_number + "\nPrerequisites:\n");
+    // Prerequisites
     results[0].forEach(elem => {
       if (typeof elem[0]== 'number') string += pick(elem);
       else string += ("   " + elem + "\n");
     });
+    // Corequisites
     string += ("\nCorequisites:\n");
     if (Array.isArray(results[1]))
       results[1].forEach(coreq => string += ("   " + coreq + "\n"));
     else string += ("   " + results[1] + "\n");
+    // Antirequisites
     string += ("\nAntirequisites:\n");
     if(Array.isArray(results[2]))
       results[2].forEach(antireq => string += ("   " + antireq + "\n"));
     else string += ("   " + results[2]);
+    // Cross Listings
+    string += ("\nCross Listings:\n");
+    results[3].forEach(cl => string += ("   " + cl + "\n"));
+    // Terms Offered
+    string += ("\nTerms Offered:\n");
+    results[4].forEach(term => string += ("   " + term + "\n"));
     console.log(string);
     results.push(string);
     callback(results);
@@ -115,16 +126,6 @@ function getPrereqs (subject, course_number, callback) {
      if(err) console.error(err);
      const course = res.data.subject + ' ' + res.data.catalog_number + ' - ' + res.data.title;
      const prereqs = res.data.prerequisites_parsed;
-     /*var extractArray = function (arr) {
-       // if first element is a number --> Choose 1 course
-       if(typeof arr[0] === 'number') {
-         return {
-           1: Object.assign([], extractArray(arr.slice(1)))
-         };
-       }
-       arr = arr.map(elem => (Array.isArray(elem)) ? extractArray(elem) : elem);
-       return arr;
-     }*/
    callback(prereqs);
  })
 }
@@ -164,6 +165,23 @@ function getCoreqs (subject, course_number, callback) {
   })
 }
 
+function getCrosslistings(subject, course_number, callback) {
+  uwclient.get(`/courses/${subject}/${course_number}.json`, function(err, res){
+    if(err) console.error(err);
+    var crosslistings = res.data.crosslistings;
+    crosslistings = crosslistings.replace(/\s+/g,'').split(',');
+    callback(crosslistings);
+  });
+}
+
+function getTermsOffered(subject, course_number, callback) {
+  uwclient.get(`/courses/${subject}/${course_number}.json`, function(err, res){
+    if(err) console.error(err);
+    var terms = res.data.terms_offered;
+    callback(terms);
+  });
+}
+
 function getCourses() {
   uwclient.get('/courses.json', function (err, res) {
     const courses = [];
@@ -182,7 +200,6 @@ function getCourses() {
     })
   });
 }
-
 
 // Exports
 module.exports = {
