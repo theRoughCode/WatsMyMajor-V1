@@ -94,8 +94,7 @@ function getRequisites(subject, course_number, callback) {
       results[2].forEach(antireq => string += ("   " + antireq + "\n"));
     else string += ("   " + results[2]);
     // Cross Listings
-    string += ("\nCross Listings:\n");
-    results[3].forEach(cl => string += ("   " + cl + "\n"));
+    string += ("\nCross Listings:\n   " + results[3] + "\n");
     // Terms Offered
     string += ("\nTerms Offered:\n");
     results[4].forEach(term => string += ("   " + term + "\n"));
@@ -169,7 +168,6 @@ function getCrosslistings(subject, course_number, callback) {
   uwclient.get(`/courses/${subject}/${course_number}.json`, function(err, res){
     if(err) console.error(err);
     var crosslistings = res.data.crosslistings;
-    crosslistings = crosslistings.replace(/\s+/g,'').split(',');
     callback(crosslistings);
   });
 }
