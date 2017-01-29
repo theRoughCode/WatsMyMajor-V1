@@ -2,6 +2,7 @@
 var express = require('express');
 var app = express();
 var port = process.env.PORT || 8080;
+var path = require('path');
 var waterloo = require('./waterloo')
 var bodyParser = require('body-parser');
 app.use(bodyParser.json()); // support json encoded bodies
@@ -13,6 +14,8 @@ app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 // start the server
 app.listen(port);
 console.log('Server started! At http://localhost:' + port);
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'hbs');
 
 // routes will go here
 app.get('/api/users', function(req, res) {
@@ -59,7 +62,17 @@ app.post('/api/users', function(req, res) {
     res.send(user_id + ' ' + token + ' ' + geo);
 });
 
-app.get('/wat', function(req, res){
+app.get('/wat/:course/:number', function(req, res){
+  var course = req.params.course;
+  var number = req.params.number;
+  waterloo.getRequisites(course, number, output =>
+    res.render('index', {
+      course: course + number,
+      prereqs: output[0],
+      coreqs: output[1],
+      antireqs: output[2],
+      string: output[3]
+    }));
 })
 
 app.get('/', function(req, res){

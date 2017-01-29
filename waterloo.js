@@ -3,7 +3,10 @@ var fs = require('fs');
 var async = require('async');
 
 // Enable hiding of API Key
-require('dotenv').config();;
+require('dotenv').config();
+
+// filename for courses json file
+const filename = 'courses.json';
 
 // instantiate client
 var uwclient = new watApi({
@@ -11,17 +14,34 @@ var uwclient = new watApi({
 })
 
 
-function getReqsGraph () {
-  uwclient.get('/courses.json', function (err, res) {
+function getReqsGraph() {
+  fs.readFile(filename, 'utf8', (err, data) => {
+    if(err) return console.error(err);
+    var courses = JSON.parse(data);
+    async.each(courses, function(course, callback){
+      getRequisites(course.subject, course.catalog_number, function(requisites) {
+        course.prereqs = requisites[0];
+        course.coreqs = requisites[1];
+        course.antireqs = requisites[2];
+        console.log(requisites[0]);
+        callback();
+      });
+    }, err => {
+      if(err) return console.error(err);
+      console.log(courses);
+    });
+  });
+  /*uwclient.get('/courses.json', function (err, res) {
     const courses = [];
     if(err) console.error(err);
 
     res.data.forEach(course => {
-      const course_code = course.subject + course.catalog_number;
+      var course_code = course.subject + course.catalog_number;
 
       async.waterfall([function(callback) {
         const subject = course.subject;
         const course_number = course.catalog_number;
+        var prereqs;
         getPrereqs(subject, course_number, reqs => callback(null, subject, course_number, reqs));
       }, function (subject, course_number, prereqs, callback){
         getCoreqs(subject, course_number, reqs => callback(null, subject, course_number, prereqs, reqs));
@@ -44,39 +64,72 @@ function getReqsGraph () {
       courses.sort((a, b) => (a.course_code < b.course_code) ? -1 : 1);
       //console.log(courses);
       })
-    });
+    });*/
 }
 
 // Use API
+function getRequisites(subject, course_number, callback) {
+  async.parallel([
+    callback => getPrereqs(subject, course_number, reqs => callback(null, reqs)),
+    callback => getCoreqs(subject, course_number, reqs => callback(null, reqs)),
+    callback => getAntireqs(subject, course_number, reqs => callback(null, reqs))
+  ], function(err, results) {
+    if(err) console.error(err);
+    var string = ("Course: " + subject + course_number + "\nPrerequisites:\n");
+    results[0].forEach(elem => {
+      if (typeof elem[0]== 'number') string += pick(elem);
+      else string += ("   " + elem + "\n");
+    });
+    string += ("\nCorequisites:\n");
+    if (Array.isArray(results[1]))
+      results[1].forEach(coreq => string += ("   " + coreq + "\n"));
+    else string += ("   " + results[1] + "\n");
+    string += ("\nAntirequisites:\n");
+    if(Array.isArray(results[2]))
+      results[2].forEach(antireq => string += ("   " + antireq + "\n"));
+    else string += ("   " + results[2]);
+    console.log(string);
+    results.push(string);
+    callback(results);
+  });
+}
+
+function pick (arr) {
+  var string = "";
+  var num = arr[0];
+  string += ("   Choose " + num + " of:\n");
+  arr.slice(1).forEach(elem => {
+    if (typeof elem[0] === 'number'){
+      num = elem[0];
+      string += ("      Choose " + num + " of:\n");
+      elem.slice(1).forEach(elem2 => string += ("         " + elem2 + "\n"));
+    }
+    else string += ("      " + elem + "\n");
+  });
+  return string;
+}
+
+
 function getPrereqs (subject, course_number, callback) {
   uwclient.get(`/courses/${subject}/${course_number}/prerequisites.json`, function(err, res){
      if(err) console.error(err);
      const course = res.data.subject + ' ' + res.data.catalog_number + ' - ' + res.data.title;
      const prereqs = res.data.prerequisites_parsed;
-     callback(prereqs);
-     /*const mandatory_courses = [];
-     prereqs.forEach(elem => {
-       if(elem instanceof Array) {
-         const pick = elem[0];
-         console.log("Choose " + pick + " of:");
-         elem = elem.slice(1);
-         elem.forEach(function(elem) {
-           console.log("   " + elem);
-         });
+     /*var extractArray = function (arr) {
+       // if first element is a number --> Choose 1 course
+       if(typeof arr[0] === 'number') {
+         return {
+           1: Object.assign([], extractArray(arr.slice(1)))
+         };
        }
-       else {
-         mandatory_courses.push(elem);
-       }
-     });
-     console.log("Must take the following courses:");
-     mandatory_courses.forEach(course => console.log("   " + course));
-     return prereqs;
-   });*/
+       arr = arr.map(elem => (Array.isArray(elem)) ? extractArray(elem) : elem);
+       return arr;
+     }*/
+   callback(prereqs);
  })
 }
 
 function getAntireqs (subject, course_number, callback) {
-  console.log(subject, course_number);
   uwclient.get(`/courses/${subject}/${course_number}.json`, function(err, res){
     if(err) console.error(err);
     var antireqs = res.data.antirequisites;
@@ -89,30 +142,49 @@ function getCoreqs (subject, course_number, callback) {
   uwclient.get(`/courses/${subject}/${course_number}.json`, function(err, res){
     if(err) console.error(err);
     var coreqs = res.data.corequisites;
-    if (coreqs === null) callback(null);
-    var num = coreqs.slice(0, 3);
-    switch(num) {
-      case 'One':
+    if (coreqs !== null) {
+      var num = coreqs.slice(0, 3);
+      switch(num) {
+        case 'One':
         num = '1';
         break;
-      case 'Two':
+        case 'Two':
         num = '2';
         break;
-      case 'Three':
+        case 'Three':
         num = '3';
         break;
-      default:
+        default:
         console.error("Error reading corequisites");
+      }
+      coreqs = coreqs.slice(7,-1).replace(/\s+/g,'').split(',');
+      coreqs.unshift(num);
     }
-    coreqs = coreqs.slice(7,-1).replace(/\s+/g,'').split(',');
-    coreqs.unshift(num);
     callback(coreqs);
   })
 }
 
-getReqsGraph();
+function getCourses() {
+  uwclient.get('/courses.json', function (err, res) {
+    const courses = [];
+    res.data.forEach(course => courses.push({
+      'subject': course.subject,
+      'catalog_number': course.catalog_number
+    }));
+    // sort courses alphanumerically
+    courses.sort((a, b) => (a.course < b.course) ? -1 : 1);
+    console.log(courses);
+
+    var json = JSON.stringify(courses);
+    fs.writeFile(filename, json, 'utf8', (err) => {
+      if(err) console.error(err);
+      console.log('File saved.');
+    })
+  });
+}
+
 
 // Exports
 module.exports = {
-  getPrereqs
+  getRequisites
 }
