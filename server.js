@@ -66,15 +66,7 @@ app.get('/wat/:course/:number', function(req, res){
   var course = req.params.course;
   var number = req.params.number;
   waterloo.getRequisites(course, number, output =>
-    res.render('index', {
-      course: course + number,
-      prereqs: output[0],
-      coreqs: output[1],
-      antireqs: output[2],
-      crosslistings: output[3],
-      terms: output[4],
-      string: output[5]
-    }));
+    res.render('index', output));
 })
 
 app.get('/', function(req, res){

@@ -69,39 +69,86 @@ function getReqsGraph() {
 
 // Use API
 function getRequisites(subject, course_number, callback) {
-  async.parallel([
-    callback => getPrereqs(subject, course_number, reqs => callback(null, reqs)),
-    callback => getCoreqs(subject, course_number, reqs => callback(null, reqs)),
-    callback => getAntireqs(subject, course_number, reqs => callback(null, reqs)),
-    callback => getCrosslistings(subject, course_number, reqs => callback(null, reqs)),
-    callback => getTermsOffered(subject, course_number, reqs => callback(null, reqs))
-  ], function(err, results) {
-    if(err) console.error(err);
-    var string = ("Course: " + subject + course_number + "\nPrerequisites:\n");
-    // Prerequisites
-    results[0].forEach(elem => {
-      if (typeof elem[0]== 'number') string += pick(elem);
-      else string += ("   " + elem + "\n");
-    });
-    // Corequisites
-    string += ("\nCorequisites:\n");
-    if (Array.isArray(results[1]))
-      results[1].forEach(coreq => string += ("   " + coreq + "\n"));
-    else string += ("   " + results[1] + "\n");
-    // Antirequisites
-    string += ("\nAntirequisites:\n");
-    if(Array.isArray(results[2]))
-      results[2].forEach(antireq => string += ("   " + antireq + "\n"));
-    else string += ("   " + results[2]);
-    // Cross Listings
-    string += ("\nCross Listings:\n   " + results[3] + "\n");
-    // Terms Offered
-    string += ("\nTerms Offered:\n");
-    results[4].forEach(term => string += ("   " + term + "\n"));
-    console.log(string);
-    results.push(string);
-    callback(results);
-  });
+  getPrereqs(subject, course_number, prereqs =>
+    uwclient.get(`/courses/${subject}/${course_number}.json`, function(err, res){
+       if(err) console.error(err);
+       const course = res.data.subject + ' ' + res.data.catalog_number + ' - ' + res.data.title;
+       const description = res.data.description;
+       var antireqs = res.data.antirequisites;
+       if(antireqs !== null) {
+         antireqs = antireqs.replace(/\s+/g,'').split(',');
+         antireqs.forEach((elem, index) => {
+           if(!isNaN(elem.charAt(0))) {
+             antireqs[index - 1] = antireqs[index - 1] + ", " + elem;
+             antireqs.splice(index, 1);
+           }
+         });
+       }
+       var coreqs = res.data.corequisites;
+       if (coreqs !== null) {
+         if(coreqs.slice(3,5) === 'of'){
+           var num = coreqs.slice(0, 3);
+           switch(num) {
+             case 'One':
+             num = '1';
+             break;
+             case 'Two':
+             num = '2';
+             break;
+             case 'Three':
+             num = '3';
+             break;
+             default:
+             console.error("Error reading corequisites");
+           }
+           coreqs = coreqs.slice(7,-1).replace(/\s+/g,'').split(',');
+           coreqs.unshift(num);
+         } else {
+           coreqs = coreqs.replace(/or/g,', ');
+         }
+       }
+       var crosslistings = res.data.crosslistings;
+       var terms = res.data.terms_offered;
+
+       //OUTPUT STRING
+       var string = ("Course: " + subject + course_number + "\nPrerequisites:\n");
+       // Prerequisites
+       if(Array.isArray(prereqs)){
+         prereqs.forEach(elem => {
+           if (typeof elem[0]== 'number') string += pick(elem);
+           else string += ("   " + elem + "\n");
+         });
+       } else string += ("   " + prereqs + "\n");
+       // Corequisites
+       string += ("\nCorequisites:\n");
+       if (Array.isArray(coreqs))
+         coreqs.forEach(coreq => string += ("   " + coreq + "\n"));
+       else string += ("   " + coreqs + "\n");
+       // Antirequisites
+       string += ("\nAntirequisites:\n");
+       if(Array.isArray(antireqs))
+         antireqs.forEach(antireq => string += ("   " + antireq + "\n"));
+       else string += ("   " + antireqs);
+       // Cross Listings
+       string += ("\nCross Listings:\n   " + crosslistings + "\n");
+       // Terms Offered
+       string += ("\nTerms Offered:\n");
+       terms.forEach(term => string += ("   " + term + "\n"));
+       console.log(string);
+
+       const data = {
+         course: course,
+         description: description,
+         prereqs: prereqs,
+         antireqs: antireqs,
+         coreqs: coreqs,
+         crosslistings: crosslistings,
+         terms: terms,
+         string: string
+       }
+       callback(data);
+     })
+  );
 }
 
 function pick (arr) {
@@ -127,57 +174,6 @@ function getPrereqs (subject, course_number, callback) {
      const prereqs = res.data.prerequisites_parsed;
    callback(prereqs);
  })
-}
-
-function getAntireqs (subject, course_number, callback) {
-  uwclient.get(`/courses/${subject}/${course_number}.json`, function(err, res){
-    if(err) console.error(err);
-    var antireqs = res.data.antirequisites;
-    if(antireqs !== null) antireqs = antireqs.replace(/\s+/g,'').split(',');
-    callback(antireqs);
-  })
-}
-
-function getCoreqs (subject, course_number, callback) {
-  uwclient.get(`/courses/${subject}/${course_number}.json`, function(err, res){
-    if(err) console.error(err);
-    var coreqs = res.data.corequisites;
-    if (coreqs !== null) {
-      var num = coreqs.slice(0, 3);
-      switch(num) {
-        case 'One':
-        num = '1';
-        break;
-        case 'Two':
-        num = '2';
-        break;
-        case 'Three':
-        num = '3';
-        break;
-        default:
-        console.error("Error reading corequisites");
-      }
-      coreqs = coreqs.slice(7,-1).replace(/\s+/g,'').split(',');
-      coreqs.unshift(num);
-    }
-    callback(coreqs);
-  })
-}
-
-function getCrosslistings(subject, course_number, callback) {
-  uwclient.get(`/courses/${subject}/${course_number}.json`, function(err, res){
-    if(err) console.error(err);
-    var crosslistings = res.data.crosslistings;
-    callback(crosslistings);
-  });
-}
-
-function getTermsOffered(subject, course_number, callback) {
-  uwclient.get(`/courses/${subject}/${course_number}.json`, function(err, res){
-    if(err) console.error(err);
-    var terms = res.data.terms_offered;
-    callback(terms);
-  });
 }
 
 function getCourses() {
