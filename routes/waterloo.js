@@ -1,6 +1,6 @@
-var watApi = require('uwaterloo-api');
-var fs = require('fs');
-var async = require('async');
+const watApi = require('uwaterloo-api');
+const fs = require('fs');
+const async = require('async');
 
 // Enable hiding of API Key
 require('dotenv').config();
