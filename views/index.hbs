@@ -31,38 +31,52 @@
       xfile.send(null);
     }
 
-    loadJSON(response => {
-      courses = JSON.parse(response);
-
-      console.log(courses);
-    });
+    loadJSON(response => courses = JSON.parse(response));
 
     function findMatches(word){
       return courses.filter(course => {
         const regex = new RegExp(word, 'gi');
-        const course_title = course.subject + course.catalog_number;
-        return course_title.match(regex);
+        const course_title = course.subject + " " + course.catalog_number;
+        const course_title_no_space = course.subject + course.catalog_number;
+        return course_title.match(regex) || course_title_no_space.match(regex);
       })
     }
 
     function displayMatches(){
-      console.log(this.value);
+      if (this.value == "") {
+        suggestions.innerHTML = `
+          <li>Filter for a course</li>
+          <li>or a subject</li>
+          `;
+        return;
+      }
       const matchArray = findMatches(this.value);
       const html = matchArray.map(course => {
         const regex = new RegExp(this.value, 'gi');
-        const course_subject = course.subject.replace(regex, `<span class="hl">${this.value.toUpperCase()}</span>`);
-        const course_number = course.catalog_number.replace(regex, `<span class="hl">${this.value.toUpperCase()}</span>`);
-        return `<li><span class="name">${course_subject} ${course_number}</span></li>`
+        var course_title = course.subject + " " + course.catalog_number;
+        course_title = course_title.replace(regex, `<span class="hl">${this.value.toUpperCase()}</span>`);
+        return `<li><span class="name">${course_title}</span></li>`
       }).join('');
       suggestions.innerHTML = html;
+    }
+
+    function selectMatch(e) {
+      e.preventDefault();
+      const result = suggestions.querySelector('li');
+      // if no search results
+      if (!result) return;
+      const [subject, number] = result.textContent.split(' ');
+      const url_redirect = `wat/${subject}/${number}`;
+      window.location.href = url_redirect;
     }
 
 
     const searchInput = document.querySelector('.search');
     const suggestions = document.querySelector('.suggestions');
+    const search = document.querySelector('.search-form');
 
-    //searchInput.addEventListener('change', displayMatches);
     searchInput.addEventListener('keyup', displayMatches);
+    search.addEventListener('submit', selectMatch);
   </script>
 </body>
 </html>

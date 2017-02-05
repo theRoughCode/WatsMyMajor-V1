@@ -15,4 +15,8 @@ routes.get('/wat/:course/:number', function(req, res){
     res.render('results', output));
 })
 
+routes.get('/wat/retrieve', function (req, res) {
+  waterloo.getCourses();
+})
+
 module.exports = routes;

@@ -6,7 +6,7 @@ const async = require('async');
 require('dotenv').config();
 
 // filename for courses json file
-const filename = 'courses.json';
+const filename = './data.json';
 
 // instantiate client
 var uwclient = new watApi({
@@ -205,5 +205,6 @@ function getData() {
 // Exports
 module.exports = {
   getRequisites,
-  getData
+  getData,
+  getCourses
 }
