@@ -2,11 +2,67 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>WatsMyMajor</title>
-  <link rel="stylesheet" href="../public/css/style.css">
+  <title>WatsMyMajor - Course Selection</title>
+  <link rel="stylesheet" type="text/css" href="./stylesheets/style.css">
 </head>
 <body>
+  <form class="search-form">
+    <input type="text" class="search" placeholder="Course or Subject">
+    <ul class="suggestions">
+      <li>Filter for a course</li>
+      <li>or a subject</li>
+    </ul>
+  </form>
+  <script>
+    const filepath = "./data.json";
+    var courses = [];
+
+    function loadJSON(callback) {
+      var xfile = new XMLHttpRequest();
+      xfile.overrideMimeType("application/json");  //forces string to be parsed as text
+      xfile.open('GET', filepath, true);
+      // this is called once file is ready
+      xfile.onreadystatechange = function () {
+        if (xfile.readyState == 4 && xfile.status == "200") {
+          // .open will NOT return a value but simply returns undefined in async mode so use a callback
+          callback(xfile.responseText);
+        }
+      }
+      xfile.send(null);
+    }
+
+    loadJSON(response => {
+      courses = JSON.parse(response);
+
+      console.log(courses);
+    });
+
+    function findMatches(word){
+      return courses.filter(course => {
+        const regex = new RegExp(word, 'gi');
+        const course_title = course.subject + course.catalog_number;
+        return course_title.match(regex);
+      })
+    }
+
+    function displayMatches(){
+      console.log(this.value);
+      const matchArray = findMatches(this.value);
+      const html = matchArray.map(course => {
+        const regex = new RegExp(this.value, 'gi');
+        const course_subject = course.subject.replace(regex, `<span class="hl">${this.value.toUpperCase()}</span>`);
+        const course_number = course.catalog_number.replace(regex, `<span class="hl">${this.value.toUpperCase()}</span>`);
+        return `<li><span class="name">${course_subject} ${course_number}</span></li>`
+      }).join('');
+      suggestions.innerHTML = html;
+    }
 
 
+    const searchInput = document.querySelector('.search');
+    const suggestions = document.querySelector('.suggestions');
+
+    //searchInput.addEventListener('change', displayMatches);
+    searchInput.addEventListener('keyup', displayMatches);
+  </script>
 </body>
 </html>

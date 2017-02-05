@@ -13,7 +13,6 @@ var uwclient = new watApi({
   API_KEY : process.env.API_KEY
 })
 
-
 function getReqsGraph() {
   fs.readFile(filename, 'utf8', (err, data) => {
     if(err) return console.error(err);
@@ -195,7 +194,16 @@ function getCourses() {
   });
 }
 
+function getData() {
+  fs.readFile(filename, 'utf8', (err, data) => {
+    if(err) return console.error(err);
+    const courses = JSON.parse(data);
+    return courses;
+  });
+}
+
 // Exports
 module.exports = {
-  getRequisites
+  getRequisites,
+  getData
 }

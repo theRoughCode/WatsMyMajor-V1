@@ -11,5 +11,7 @@ app.use('/', routes);
 // Turn on that server!
 app.listen(port);
 console.log('Server started! At http://localhost:' + port);
-app.set('views', path.join(__dirname, 'views'));
+app.use(express.static(path.join(__dirname, '/')));
+app.use(express.static(path.join(__dirname, '/public')));
+app.use(express.static(path.join(__dirname, '/views')));
 app.set('view engine', 'hbs');
