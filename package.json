@@ -1,7 +1,6 @@
 {
   "name": "express-parameters",
   "main": "app.js",
-  "start": "nodemon app.js",
   "dependencies": {
     "async": "^2.1.4",
     "body-parser": "^1.16.0",
