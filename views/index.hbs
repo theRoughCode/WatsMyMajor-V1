@@ -45,8 +45,10 @@
       })
     }
 
+    // Updates list to display query
     function displayMatches(){
       if (this.value == "") {
+        suggestions.classList.remove("active");
         suggestions.innerHTML = `
           <li>Filter for a course</li>
           <li>or a subject</li>
@@ -56,19 +58,33 @@
       const matchArray = findMatches(this.value);
       const html = matchArray.map(course => {
         const regex = new RegExp(this.value, 'gi');
+        const subject = course.subject;
+        const catalog_number = course.catalog_number;
         var course_title = course.subject + " " + course.catalog_number;
         course_title = course_title.replace(regex, `<span class="hl">${this.value.toUpperCase()}</span>`);
-        return `<li><span class="name">${course_title}</span></li>`
+        return `<li><span class="name" data-subject=${subject} data-number=${catalog_number}>${course_title}</span></li>`
       }).join('');
+      suggestions.classList.add("active");
       suggestions.innerHTML = html;
+      console.log(suggestions.classList.contains("active"));
     }
 
-    function selectMatch(e) {
+    // User presses Enter
+    function submitSearch(e) {
       e.preventDefault();
       const result = suggestions.querySelector('li');
       // if no search results
       if (!result) return;
       const [subject, number] = result.textContent.split(' ');
+      const url_redirect = `wat/${subject}/${number}`;
+      window.location.href = url_redirect;
+    }
+
+    // Select Course from dropdown list
+    function selectMatch (e) {
+      if(!suggestions.classList.contains("active")) return;
+      const subject = e.target.dataset.subject;
+      const number = e.target.dataset.number;
       const url_redirect = `wat/${subject}/${number}`;
       window.location.href = url_redirect;
     }
@@ -79,7 +95,8 @@
     const search = document.querySelector('.search-form');
 
     searchInput.addEventListener('keyup', displayMatches);
-    search.addEventListener('submit', selectMatch);
+    suggestions.addEventListener('click', selectMatch);
+    search.addEventListener('submit', submitSearch);
   </script>
 </body>
 </html>

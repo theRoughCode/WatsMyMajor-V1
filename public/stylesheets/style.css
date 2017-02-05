@@ -95,6 +95,11 @@ input.search {
  position: relative;
  /*perspective:20px;*/
 }
+
+.suggestions.active {
+  cursor: pointer;
+}
+
 .suggestions li {
  background:white;
  list-style: none;
