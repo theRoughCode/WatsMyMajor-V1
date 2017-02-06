@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>WatsMyMajor - Course Selection</title>
+  <link rel="icon" href="/public/images/favicon.ico">
   <link rel="stylesheet" type="text/css" href="./stylesheets/style.css">
 </head>
 <body>
@@ -55,7 +56,7 @@
           `;
         return;
       }
-      const matchArray = findMatches(this.value);
+      const matchArray = findMatches(this.value).sort();
       const html = matchArray.map(course => {
         const regex = new RegExp(this.value, 'gi');
         const subject = course.subject;
@@ -66,7 +67,6 @@
       }).join('');
       suggestions.classList.add("active");
       suggestions.innerHTML = html;
-      console.log(suggestions.classList.contains("active"));
     }
 
     // User presses Enter
