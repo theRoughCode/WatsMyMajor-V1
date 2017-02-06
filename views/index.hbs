@@ -57,7 +57,7 @@
           `;
         return;
       }
-      const matchArray = findMatches(this.value).sort();
+      const matchArray = findMatches(this.value);
       const html = matchArray.map(course => {
         const regex = new RegExp(this.value, 'gi');
         const subject = course.subject;
@@ -65,7 +65,7 @@
         var course_title = course.subject + " " + course.catalog_number;
         course_title = course_title.replace(regex, `<span class="hl">${this.value.toUpperCase()}</span>`);
         return `<li><span class="name" data-subject=${subject} data-number=${catalog_number}>${course_title}</span></li>`
-      }).join('');
+      }).sort().join('');
       suggestions.classList.add("active");
       suggestions.innerHTML = html;
     }

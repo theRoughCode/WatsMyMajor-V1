@@ -88,11 +88,13 @@ input.search {
  box-shadow: 0 0 5px rgba(0, 0, 0, 0.12), inset 0 0 2px rgba(0, 0, 0, 0.19);
 }
 
-
 .suggestions {
  margin: 0;
  padding: 0;
  position: relative;
+ height:200px;
+ overflow-x: hidden;
+ overflow-y:auto;
  /*perspective:20px;*/
 }
 
