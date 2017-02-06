@@ -47,8 +47,9 @@
     }
 
     // Updates list to display query
-    function displayMatches(){
-      if (this.value == "") {
+    function displayMatches(e){
+      if (e.key == "Escape" || this.value == "") {
+        if (e.key == "Escape") searchInput.value = "";
         suggestions.classList.remove("active");
         suggestions.innerHTML = `
           <li>Filter for a course</li>
