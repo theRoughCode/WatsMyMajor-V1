@@ -95,8 +95,8 @@ input.search {
  position: relative;
  /*height:200px;
  overflow-x: hidden;
- overflow-y:auto;*/
- perspective:600px;
+ overflow-y:auto;
+ perspective:600px;*/
 }
 
 .suggestions.active {

@@ -58,7 +58,12 @@
         return;
       }
       // Slicing to only display first 5 values --> faster load time
-      const matchArray = findMatches(this.value).slice(0, 5);
+      const matchArray = findMatches(this.value).sort((a,b) => {
+        const a_string = a.subject + a.catalog_number;
+        const b_string = b.subject + b.catalog_number;
+        return a_string.localeCompare(b_string);
+      }).slice(0,5);
+
       const html = matchArray.map(course => {
         // inserts white space between numbers and letters
         const re_space = /[^0-9\s](?=[0-9])/g;
@@ -77,7 +82,7 @@
         return;
       }
       suggestions.classList.add("active");
-      suggestions.innerHTML = html.sort().join('');;
+      suggestions.innerHTML = html.join('');;
     }
 
     // User presses Enter
