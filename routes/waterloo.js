@@ -6,7 +6,8 @@ const async = require('async');
 require('dotenv').config();
 
 // filename for courses json file
-const filename = './data.json';
+const data_filename = './data.json';
+const sorted_data_filename = './sorted.json';
 
 // instantiate client
 var uwclient = new watApi({
@@ -175,22 +176,61 @@ function getPrereqs (subject, course_number, callback) {
  })
 }
 
-function getCourses() {
+// checks if subject is in arr.  Returns -1 if false
+function indexInArray (subject, arr) {
+  for (var i = 0; i < arr.length; i++){
+    if (arr[i][0] == subject) return i;
+  }
+  return -1;
+}
+
+function getCourses(callback) {
   uwclient.get('/courses.json', function (err, res) {
     const courses = [];
-    res.data.forEach(course => courses.push({
-      'subject': course.subject,
-      'catalog_number': course.catalog_number
-    }));
+    var sorted_courses = [];
+    res.data.forEach(course => {
+      const subject = course.subject;
+      const catalog_number = course.catalog_number;
+      courses.push({
+        'subject': subject,
+        'catalog_number': catalog_number
+      });
+
+      const index = indexInArray (subject, sorted_courses);
+      if (index == -1) sorted_courses.push([subject, [catalog_number]]);
+      else sorted_courses[index][1].push(catalog_number);
+    });
+    
     // sort courses alphanumerically
     courses.sort((a, b) => (a.course < b.course) ? -1 : 1);
-    console.log(courses);
+    sorted_courses.sort((a,b) => (a[0] < b[0]) ? -1 : 1);
+    sorted_courses.forEach(course => course[1].sort((a,b) => (a < b) ? -1 : 1));
+
+    // Convert array to object
+    sorted_courses = sorted_courses.reduce((a,b) => {
+      a[b[0]] = b[1];
+      return a;
+    }, {});
 
     var json = JSON.stringify(courses);
-    fs.writeFile(filename, json, 'utf8', (err) => {
-      if(err) console.error(err);
-      console.log('File saved.');
-    })
+    var sorted_json = JSON.stringify(sorted_courses);
+
+    fs.writeFile(data_filename, json, 'utf8', (err) => {
+      if(err) {
+        console.error(err);
+        callback(0);
+      }
+      console.log(data_filename + ' saved.');
+    });
+
+    fs.writeFile(sorted_data_filename, sorted_json, 'utf8', (err) => {
+      if(err) {
+        console.error(err);
+        callback(0);
+      }
+      console.log(sorted_data_filename + ' saved.');
+    });
+    callback(1);
   });
 }
 

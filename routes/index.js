@@ -16,7 +16,10 @@ routes.get('/wat/:course/:number', function(req, res){
 })
 
 routes.get('/wat/retrieve', function (req, res) {
-  waterloo.getCourses();
+  waterloo.getCourses(result =>{
+    if (result == 1) res.send("Data retrieved successfully.");
+    else res.send("Data retrieval unsuccessful.");
+  });
 })
 
 module.exports = routes;
