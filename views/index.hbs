@@ -65,9 +65,14 @@
         var course_title = course.subject + " " + course.catalog_number;
         course_title = course_title.replace(regex, `<span class="hl">${this.value.toUpperCase()}</span>`);
         return `<li><span class="name" data-subject=${subject} data-number=${catalog_number}>${course_title}</span></li>`
-      }).sort().join('');
+      });
+      if(html.length == 0) {
+        suggestions.classList.remove("active");
+        suggestions.innerHTML = ``;
+        return;
+      }
       suggestions.classList.add("active");
-      suggestions.innerHTML = html;
+      suggestions.innerHTML = html.sort().join('');;
     }
 
     // User presses Enter
@@ -86,6 +91,7 @@
       if(!suggestions.classList.contains("active")) return;
       const subject = e.target.dataset.subject;
       const number = e.target.dataset.number;
+      if(!subject || !number) return;
       const url_redirect = `wat/${subject}/${number}`;
       window.location.href = url_redirect;
     }
