@@ -74,7 +74,7 @@
         const catalog_number = course.catalog_number;
         var course_title = subject + " " + catalog_number;
         course_title = course_title.replace(regex, `<span class="hl">${user_query.toUpperCase()}</span>`);
-        return `<li><span class="name" data-subject=${subject} data-number=${catalog_number}>${course_title}</span></li>`
+        return `<li data-subject=${subject} data-number=${catalog_number}><span class="name">${course_title}</span></li>`
       });
       if(html.length == 0) {
         suggestions.classList.remove("active");
@@ -82,7 +82,8 @@
         return;
       }
       suggestions.classList.add("active");
-      suggestions.innerHTML = html.join('');;
+      suggestions.innerHTML = html.join('');
+      updateListItems();
     }
 
     // User presses Enter
@@ -99,21 +100,37 @@
     // Select Course from dropdown list
     function selectMatch (e) {
       if(!suggestions.classList.contains("active")) return;
-      const subject = e.target.dataset.subject;
-      const number = e.target.dataset.number;
+      var subject, number;
+      // If user clicks on span element instead of list
+      if(e.target.tagName == "SPAN") {
+        subject = e.target.parentElement.parentElement.dataset.subject;
+        number = e.target.parentElement.parentElement.dataset.number;
+      }
+      else{
+        subject = e.target.dataset.subject;
+        number = e.target.dataset.number;
+      }
+      
       if(!subject || !number) return;
       const url_redirect = `wat/${subject}/${number}`;
       window.location.href = url_redirect;
+    }
+
+    // Attach event listener for onclick events
+    function updateListItems () {
+      listItem = suggestions.querySelectorAll('li');
+      listItem.forEach(item => item.addEventListener('click', selectMatch));
     }
 
 
     const searchInput = document.querySelector('.search');
     const suggestions = document.querySelector('.suggestions');
     const search = document.querySelector('.search-form');
+    var listItem = suggestions.querySelectorAll('li');
 
     searchInput.addEventListener('keyup', displayMatches);
-    suggestions.addEventListener('click', selectMatch);
     search.addEventListener('submit', submitSearch);
+    updateListItems();
   </script>
 </body>
 </html>
