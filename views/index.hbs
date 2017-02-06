@@ -60,11 +60,15 @@
       // Slicing to only display first 5 values --> faster load time
       const matchArray = findMatches(this.value).slice(0, 5);
       const html = matchArray.map(course => {
-        const regex = new RegExp(this.value, 'gi');
+        // inserts white space between numbers and letters
+        const re_space = /[^0-9\s](?=[0-9])/g;
+        const user_query = this.value.replace(re_space, '$& ');
+        // match query to portion of search result
+        const regex = new RegExp(user_query, 'gi');
         const subject = course.subject;
         const catalog_number = course.catalog_number;
-        var course_title = course.subject + " " + course.catalog_number;
-        course_title = course_title.replace(regex, `<span class="hl">${this.value.toUpperCase()}</span>`);
+        var course_title = subject + " " + catalog_number;
+        course_title = course_title.replace(regex, `<span class="hl">${user_query.toUpperCase()}</span>`);
         return `<li><span class="name" data-subject=${subject} data-number=${catalog_number}>${course_title}</span></li>`
       });
       if(html.length == 0) {
