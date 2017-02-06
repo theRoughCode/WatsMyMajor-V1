@@ -57,7 +57,8 @@
           `;
         return;
       }
-      const matchArray = findMatches(this.value);
+      // Slicing to only display first 5 values --> faster load time
+      const matchArray = findMatches(this.value).slice(0, 5);
       const html = matchArray.map(course => {
         const regex = new RegExp(this.value, 'gi');
         const subject = course.subject;
