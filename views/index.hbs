@@ -18,7 +18,7 @@
   <p id="credit"><small>Created by Raphael Koh for the University of Waterloo</small></p>
 
   <script>
-    const filepath = "./data.json";
+    const filepath = "./course_list.json";
     var courses = [];
 
     function loadJSON(callback) {
@@ -110,7 +110,7 @@
         subject = e.target.dataset.subject;
         number = e.target.dataset.number;
       }
-      
+
       if(!subject || !number) return;
       const url_redirect = `wat/${subject}/${number}`;
       window.location.href = url_redirect;
