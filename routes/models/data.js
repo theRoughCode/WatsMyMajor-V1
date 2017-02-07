@@ -44,7 +44,15 @@ function updateData (res, callback) {
 
   // Convert array to object
   sorted_courses = sorted_courses.reduce((a,b) => {
-    a[b[0]] = b[1];
+    const obj = {};
+    b[1].forEach(cat_num => {
+      obj[cat_num] = {
+        "prereqs": [],
+        "coreqs": [],
+        "antireqs": []
+      };
+    });
+    a[b[0]] = obj;
     return a;
   }, {});
 
