@@ -151,6 +151,7 @@ function getRequisites(subject, course_number, callback) {
   );
 }
 
+// handles Choose One event
 function pick (arr) {
   var string = "";
   var num = arr[0];
@@ -166,13 +167,18 @@ function pick (arr) {
   return string;
 }
 
-
 function getPrereqs (subject, course_number, callback) {
   uwclient.get(`/courses/${subject}/${course_number}/prerequisites.json`, function(err, res){
-     if(err) console.error(err);
-     const course = res.data.subject + ' ' + res.data.catalog_number + ' - ' + res.data.title;
+     if(err) {
+       console.error(err);
+       return callback(err, null);
+     }
+     if (!res) {
+       console.log("Undefined prereqs");
+       return callback(1, null);
+     }
      const prereqs = res.data.prerequisites_parsed;
-   callback(prereqs);
+   callback(null, prereqs);
  })
 }
 
@@ -186,5 +192,6 @@ function getCourses (callback) {
 // Exports
 module.exports = {
   getRequisites,
-  getCourses
+  getCourses,
+  getPrereqs
 }

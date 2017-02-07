@@ -1,4 +1,6 @@
 const fs = require('fs');
+const waterloo = require('../waterloo');
+const async = require('async');
 const COURSE_LIST = './course_list.json';
 const DATA = './data.json';
 
@@ -68,6 +70,164 @@ function updateData (res, callback) {
   });
 }
 
+var last_course_queried = "";
+var result = {};
+
+function fill (callback) {
+  fs.readFile(COURSE_LIST, 'utf8', (err, data) => {
+    if (err) return console.error(err);
+    const courses = JSON.parse(data);
+    async.eachLimit(courses, 10, function (course, callback1) {
+      const subject = course.subject;
+      const catalog_number = course.catalog_number;
+      waterloo.getPrereqs(subject, catalog_number, (err, res) => {
+        if (err) return callback1();
+        console.log(subject + catalog_number + ", res: " + res);
+        if(res)result[subject + catalog_number] = res;
+        callback1();
+      });
+    }, function (err) {
+      console.log(result);
+      callback(null, result);
+    })
+  });
+}
+
+function fillEntries (callback) {
+  var error = false;
+
+  fs.readFile(DATA, 'utf8', (err, data) => {
+    if(err) return console.error(err);
+    var courses = JSON.parse(data);
+
+    var size = 0;
+    for (subject in courses){
+      size += Object.keys(subject).length;
+    }
+
+    var counter = 0;
+    var tasks_active = 0;
+
+    /*Object.keys(courses).forEach(subject => {
+      if(counter >= size) throw BreakException;
+      Object.keys(courses[subject]).forEach(cat_num => {
+        if(tasks_active){
+          setTimeout()
+        }
+        tasks_active++;
+        if(courses[subject][cat_num]["prereqs"].length != 0) return;
+        waterloo.getPrereqs(subject, cat_num, res => {
+          if(!res || res == 1) return callback(1, courses);
+          courses[subject][cat_num]["prereqs"] = res;
+          console.log(subject, cat_num, res);
+          counter++;
+          if(counter >= size) return callback(null, courses);
+        })
+      });
+    });*/
+
+    /*var size = 0;
+    for (subject in courses){
+      size += Object.keys(subject).length;
+    }
+
+    var counter = 0;
+    var end = false;
+
+    for (subject in courses){
+      if (end) {
+        callback(courses);
+        break;
+      }
+      for (cat_num in courses[subject]){
+        if(end) break;
+        waterloo.getPrereqs(subject, cat_num, res => {
+          //console.log(res);
+          if (!res || end) return;
+          if (res === 1) {
+            console.error("Error!");
+            end = true;
+            return;
+          }
+          console.log(subject, cat_num, res);
+          courses[subject][cat_num]["prereqs"] = res;
+          if (counter >= size) {
+            callback(courses);
+          }
+          counter++;
+        })
+      }
+    }*/
+
+    const asyncTasks = [];
+
+    /*async.forEachOf(courses, function (cat_num_obj, subject, callback1) {
+      async.forEachOf(cat_num_obj, function (value, cat_num, callback2) {
+        asyncTasks.push(function (callback3) {
+          waterloo.getPrereqs(subject, cat_num, res => {
+            const prereqs = res;
+            if(prereqs) courses[subject][cat_num]["prereqs"] = prereqs;
+            console.log(subject, cat_num);
+            callback3();
+          });
+        });
+        async.setImmediate(() => callback2());
+      }, err =>  {
+        callback1();
+      });
+    }, err => {
+      async.parallel(asyncTasks, () => {
+        console.log(courses);
+        callback(null, courses);
+      })
+    });*/
+
+
+
+    /*async.forEachOf(courses, function (cat_num_obj, subject, callback1) {
+      if(error) return callback1();
+      async.forEachOf(cat_num_obj, function (value, cat_num, callback2) {
+        if(error) return callback2();
+        if (value.prereqs.length != 0)
+          return callback2();
+        waterloo.getPrereqs(subject, cat_num, res => {
+          if(res === 1) {
+            //console.error(res);
+            console.log(last_course_queried);
+            console.log("error: "+error);
+            if(true) return;
+            error = true;
+            console.log("error2: "+error);
+            return callback2(res);
+          }
+          else {
+            const prereqs = res;
+            if(prereqs)courses[subject][cat_num]["prereqs"] = prereqs;
+            last_course_queried = [subject, cat_num];
+            console.log(error);
+            console.log(subject, cat_num);
+            callback2();
+          }
+        });
+      }, function(err) {
+        if(err) {
+          console.log("asdsadasd");
+          return callback1(err);
+        }
+        callback1();
+      })
+    }, function(err) {
+      if(err) {
+        console.error("assa "+err);
+        //console.log(last_course_queried);
+        return callback(err);
+      }
+      console.log("hi");
+      callback("courses");
+    });*/
+  });
+}
+
 // checks if subject is in arr.  Returns -1 if false
 function indexInArray (subject, arr) {
   for (var i = 0; i < arr.length; i++){
@@ -100,5 +260,7 @@ module.exports = {
   COURSE_LIST,
   DATA,
   updateCourseList,
-  updateData
+  updateData,
+  fillEntries,
+  fill
 }

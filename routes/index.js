@@ -40,4 +40,12 @@ routes.get('/update/:file', function (req, res) {
   });
 });
 
+routes.get('/test', function (req, res) {
+  data.fill((err, courses) => {
+    //if(err) return console.log("Last Course: " + waterloo.last_course);
+    if(err) console.log("Failed");
+    res.send(courses);
+  });
+})
+
 module.exports = routes;
