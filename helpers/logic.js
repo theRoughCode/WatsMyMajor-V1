@@ -31,7 +31,6 @@ function retrievePrereqs (subject, cat_num, dataset, callback) {
     return callback(2, null);
   const prereqs = dataset[subject][cat_num]["prereqs"];
   if(prereqs.length === 0) return callback(3, null);
-  console.log(prereqs);
 
   dataToString(prereqs, dataset, string => callback(null, string));
 }
@@ -53,9 +52,7 @@ function dataToString (val, dataset, callback) {
         if(err === 3) return callback(val);
         return callback(val);
       }
-      console.log("str", str);
       val += " [" + str + "]";
-      console.log("obj", val);
       return callback(val);
     });
   }
@@ -89,7 +86,6 @@ function dataToString (val, dataset, callback) {
         if (string === start_string) return callback("");
         string = string.slice(0, -2);
         string += "]";
-        console.log("str: ", string);
         return callback(string);
       })
     }
