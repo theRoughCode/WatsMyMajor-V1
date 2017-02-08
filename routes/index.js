@@ -57,11 +57,20 @@ routes.get('/get/:file', function (req, res) {
   })
 })
 
-routes.get('/test', function (req, res) {
-  logic.getPrereqs("PHYS", "434", (err, data) => {
+routes.get('/test/:subject/:cat_num', function (req, res) {
+  const subject = req.params.subject.toUpperCase();
+  const cat_num = req.params.cat_num;
+
+  logic.getPrereqs(subject, cat_num, (err, data) => {
     if(err) {
-      console.error(err);
-      return res.send(err);
+      var err_msg = "Course: " + subject + " " + cat_num + " not found!"
+      if(err === 2)
+        err_msg = "Course: " + subject + " " + cat_num +
+                        " has been deprecated!";
+      else if (err === 3)
+        err_msg = "Course: " + subject + " " + cat_num + " has no prereqs!";
+      console.error(err_msg);
+      return res.send(err_msg);
     }
     console.log(data);
     res.send(data);

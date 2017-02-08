@@ -69,7 +69,7 @@ function getReqsGraph() {
 
 // Use API
 function getRequisites(subject, course_number, callback) {
-  getPrereqs(subject, course_number, prereqs =>
+  getPrereqs(subject, course_number, (err, prereqs) =>
     uwclient.get(`/courses/${subject}/${course_number}.json`, function(err, res){
        if(err) console.error(err);
        const course = res.data.subject + ' ' + res.data.catalog_number + ' - ' + res.data.title;
@@ -178,6 +178,7 @@ function getPrereqs (subject, course_number, callback) {
        return callback(1, null);
      }
      const prereqs = res.data.prerequisites_parsed;
+
    callback(null, prereqs);
  })
 }
