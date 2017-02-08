@@ -59,7 +59,11 @@ routes.get('/get/:file', function (req, res) {
 
 routes.get('/test', function (req, res) {
   logic.getPrereqs("PHYS", "434", (err, data) => {
-    console.log(err, data);
+    if(err) {
+      console.error(err);
+      return res.send(err);
+    }
+    console.log(data);
     res.send(data);
   });
 })
