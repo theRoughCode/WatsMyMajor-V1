@@ -20,7 +20,7 @@ function updateCourseList (res, callback) {
   (a.subject < b.subject && a.catalog_number < b.catalog_number) ? -1 : 1);
 
   const json = JSON.stringify(courses);
-  writeFile(COURSE_LIST, json, err => {
+  fs.writeFile(COURSE_LIST, json, err => {
     if (err) {
       console.error(err);
       callback(1, null);
@@ -29,7 +29,8 @@ function updateCourseList (res, callback) {
   });
 }
 
-function updateData (res, callback) {
+// reset data file of objects
+function resetData (res, callback) {
   var sorted_courses = [];
   res.forEach(course => {
     const subject = course.subject;
@@ -63,168 +64,45 @@ function updateData (res, callback) {
   fs.writeFile(DATA, sorted_json, 'utf8', (err) => {
     if(err) {
       console.error(err);
-      callback(0, null);
+      callback(1, null);
     }
     console.log(DATA + ' saved.');
-    callback(1, sorted_json);
+    callback(0, sorted_json);
   });
 }
 
-var last_course_queried = "";
-var result = {};
-
-function fill (callback) {
-  fs.readFile(COURSE_LIST, 'utf8', (err, data) => {
-    if (err) return console.error(err);
-    const courses = JSON.parse(data);
-    async.eachLimit(courses, 10, function (course, callback1) {
-      const subject = course.subject;
-      const catalog_number = course.catalog_number;
-      waterloo.getPrereqs(subject, catalog_number, (err, res) => {
-        if (err) return callback1();
-        console.log(subject + catalog_number + ", res: " + res);
-        if(res)result[subject + catalog_number] = res;
-        callback1();
-      });
-    }, function (err) {
-      console.log(result);
-      callback(null, result);
-    })
-  });
-}
-
+// fill out data set with requisites
 function fillEntries (callback) {
-  var error = false;
-
-  fs.readFile(DATA, 'utf8', (err, data) => {
-    if(err) return console.error(err);
-    var courses = JSON.parse(data);
-
-    var size = 0;
-    for (subject in courses){
-      size += Object.keys(subject).length;
+  fs.readFile(COURSE_LIST, 'utf8', (err, cl_data) => {
+    if (err) {
+      console.error(err);
+      return callback(err, null);
     }
+    fs.readFile(DATA, 'utf8', (err, d_data) => {
+      const course_list = JSON.parse(cl_data);  // list of sorted courses
+      const data = JSON.parse(d_data); // data object of courses
 
-    var counter = 0;
-    var tasks_active = 0;
-
-    /*Object.keys(courses).forEach(subject => {
-      if(counter >= size) throw BreakException;
-      Object.keys(courses[subject]).forEach(cat_num => {
-        if(tasks_active){
-          setTimeout()
-        }
-        tasks_active++;
-        if(courses[subject][cat_num]["prereqs"].length != 0) return;
-        waterloo.getPrereqs(subject, cat_num, res => {
-          if(!res || res == 1) return callback(1, courses);
-          courses[subject][cat_num]["prereqs"] = res;
-          console.log(subject, cat_num, res);
-          counter++;
-          if(counter >= size) return callback(null, courses);
-        })
-      });
-    });*/
-
-    /*var size = 0;
-    for (subject in courses){
-      size += Object.keys(subject).length;
-    }
-
-    var counter = 0;
-    var end = false;
-
-    for (subject in courses){
-      if (end) {
-        callback(courses);
-        break;
-      }
-      for (cat_num in courses[subject]){
-        if(end) break;
-        waterloo.getPrereqs(subject, cat_num, res => {
-          //console.log(res);
-          if (!res || end) return;
-          if (res === 1) {
-            console.error("Error!");
-            end = true;
-            return;
-          }
-          console.log(subject, cat_num, res);
-          courses[subject][cat_num]["prereqs"] = res;
-          if (counter >= size) {
-            callback(courses);
-          }
-          counter++;
-        })
-      }
-    }*/
-
-    const asyncTasks = [];
-
-    /*async.forEachOf(courses, function (cat_num_obj, subject, callback1) {
-      async.forEachOf(cat_num_obj, function (value, cat_num, callback2) {
-        asyncTasks.push(function (callback3) {
-          waterloo.getPrereqs(subject, cat_num, res => {
-            const prereqs = res;
-            if(prereqs) courses[subject][cat_num]["prereqs"] = prereqs;
-            console.log(subject, cat_num);
-            callback3();
-          });
+      async.eachLimit(course_list, 50, function (course, callback1) {
+        const subject = course.subject;
+        const catalog_number = course.catalog_number;
+        waterloo.getPrereqs(subject, catalog_number, (err, res) => {
+          if (err || !res) return callback1();
+          data[subject][catalog_number]["prereqs"] = res;
+          console.log(subject + catalog_number + ", res: " + res);
+          callback1();
         });
-        async.setImmediate(() => callback2());
-      }, err =>  {
-        callback1();
-      });
-    }, err => {
-      async.parallel(asyncTasks, () => {
-        console.log(courses);
-        callback(null, courses);
-      })
-    });*/
-
-
-
-    /*async.forEachOf(courses, function (cat_num_obj, subject, callback1) {
-      if(error) return callback1();
-      async.forEachOf(cat_num_obj, function (value, cat_num, callback2) {
-        if(error) return callback2();
-        if (value.prereqs.length != 0)
-          return callback2();
-        waterloo.getPrereqs(subject, cat_num, res => {
-          if(res === 1) {
-            //console.error(res);
-            console.log(last_course_queried);
-            console.log("error: "+error);
-            if(true) return;
-            error = true;
-            console.log("error2: "+error);
-            return callback2(res);
+      }, function (err) {
+        const data_json = JSON.stringify(data);
+        fs.writeFile(DATA, data_json, 'utf8', (err) => {
+          if (err) {
+            console.error(err);
+            return callback(err, null);
           }
-          else {
-            const prereqs = res;
-            if(prereqs)courses[subject][cat_num]["prereqs"] = prereqs;
-            last_course_queried = [subject, cat_num];
-            console.log(error);
-            console.log(subject, cat_num);
-            callback2();
-          }
+          console.log(DATA + " filled.");
+          callback(null, data_json);
         });
-      }, function(err) {
-        if(err) {
-          console.log("asdsadasd");
-          return callback1(err);
-        }
-        callback1();
       })
-    }, function(err) {
-      if(err) {
-        console.error("assa "+err);
-        //console.log(last_course_queried);
-        return callback(err);
-      }
-      console.log("hi");
-      callback("courses");
-    });*/
+    });
   });
 }
 
@@ -234,18 +112,6 @@ function indexInArray (subject, arr) {
     if (arr[i][0] == subject) return i;
   }
   return -1;
-}
-
-// Writes to File. Returns 0 if successful, and 1 if unsuccessful
-function writeFile (filepath, data, callback) {
-  fs.writeFile(filepath, data, 'utf8', (err) => {
-    if(err) {
-      console.error(err);
-      callback(1);
-    }
-    console.log(filepath + ' saved.');
-    callback(0);
-  });
 }
 
 function getData(filepath, callback) {
@@ -260,7 +126,7 @@ module.exports = {
   COURSE_LIST,
   DATA,
   updateCourseList,
-  updateData,
+  resetData,
   fillEntries,
-  fill
+  getData
 }

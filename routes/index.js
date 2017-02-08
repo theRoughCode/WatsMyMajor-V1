@@ -25,16 +25,21 @@ routes.get('/update/:file', function (req, res) {
   const file = req.params.file;
   waterloo.getCourses (result => {
     if (file == "data") {
-      data.updateData(result.data, (err, result) => {
-        if(err) console.error("Failed to update course list.");
-        res.send("Course list updated successfully.\n" + result)
+      data.resetData(result.data, (err, result) => {
+        if(err) res.send("Failed to update course list.");
+        else res.send("Course list updated successfully.  " + result)
       });
     }
-
     else if (file == "course_list") {
       data.updateCourseList(result.data, (err, result) => {
-        if(err) console.error("Failed to update course list.");
-        res.send("Course list updated successfully.\n" + result)
+        if(err) res.send("Failed to update course list.");
+        else res.send("Course list updated successfully. " + result)
+      });
+    }
+    else if (file == "fill"){
+      data.fillEntries((err, data) => {
+        if(err) return res.send("Failed to fill course data.");
+        else res.send("Course data filled successfully. " + data);
       });
     }
   });
