@@ -8,6 +8,7 @@
     "express": "~4.10.2",
     "hbs": "^4.0.1",
     "promise": "^7.1.1",
+    "tree-node": "^0.2.3",
     "uwaterloo-api": "^1.0.2"
   },
   "engines": {

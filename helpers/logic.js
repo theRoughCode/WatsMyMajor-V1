@@ -12,67 +12,47 @@ function test (callback) {
 }
 
 // returns all courses needed to take
-function getPrereqs (course, subject, callback) {
+function getPrereqs (subject, cat_num, callback) {
   data.getJSON(data.DATA, (error, res) => {
-    retrievePrereqs(course, subject, res, [], acc => callback(null, acc));
+    retrievePrereqs(subject, cat_num, res, acc => callback(null, acc));
   });
 }
 
 // returns prereqs of course
-function retrievePrereqs (course, subject, dataset, acc, callback) {
-  const prereqs = dataset[course][subject]["prereqs"];
-  acc = acc.concat(prereqs);
-  /*async.each(acc, function (set, callback1) {
-    if(typeof(set) === "string") {
-      // inserts white space between numbers and letters
-      const re_space = /[^0-9\s](?=[0-9])/g;
-      set = set.replace(re_space, '$& ');
-      var arr = set.split(" ");
-      console.log(arr);
-      //retrievePrereqs()
-      callback1();
-    }
-    else if (Array.isArray(set)) {
-      if (typeof(set[0]) === "number") {
-        const result = set.slice(1).reduce((a,b) => {
-          if (typeof(b) === "string") return a + ", " + b;
-          else if (Array.isArray(b)) {
-            if (typeof(b[0]) === "number")
-              return a + ", Choose " + b[0] + " of: " + b.slice(1).join();
-            else return a + ", all of [" + b.join() + "]";
-          } else{
-            console.log("ERROR: This shouldn't happen");
-            return a;
-          }
-        }, "");
+function retrievePrereqs (subject, cat_num, dataset, callback) {
+  if (subject === "CHEM" && cat_num === "256") cat_num = "356";
+  else if (subject === "MATH" && (cat_num === "108" || cat_num === "125"))
+    return callback("");
+  const prereqs = dataset[subject][cat_num]["prereqs"];
 
-        console.log("Choose " + set[0] + " of: " + result);
-      } else console.log("Take all of " + set.toString());
-    }
-  }, function (err) {
-
-  });*/
-  dataToString(acc, string => {
+  dataToString(prereqs, dataset, string => {
     callback(string);
   });
 }
 
 // return (String)
-function dataToString (val, callback) {
+function dataToString (val, dataset, callback) {
   const val_type = typeof(val);
   var string = "";
   if (val_type === "string") {
     // inserts white space between numbers and letters
     const re_space = /[^0-9\s](?=[0-9])/g;
     val = val.replace(re_space, '$& ');
-    return callback(val);
+    const arr = val.split(" ");
+    const subject = arr[0];
+    const cat_num = arr[1];
+    retrievePrereqs(subject, cat_num, dataset, str => {
+      if(str.length === 0) return callback(val);
+      val += " [" + str + "]";
+      return callback(val);
+    });
   }
   else if (Array.isArray(val)) {
     // [1, "course 1", "course 2"]
     if (typeof(val[0]) === "number") {
       string += "Choose " + val[0] + " of: ";
       async.eachSeries(val.slice(1), function (elem, callback1) {
-        dataToString(elem, res => {
+        dataToString(elem, dataset, res => {
           string += res + ", ";
           callback1();
         })
@@ -84,15 +64,17 @@ function dataToString (val, callback) {
     }
     // ["course 1", "course 2"]
     else {
-      string += "All of: [";
+      const start_string = "All of: [";
+      string += start_string;
       async.eachSeries(val, function (elem, callback1) {
-        dataToString(elem, res => {
+        dataToString(elem, dataset, res => {
           string += res + ", "
           callback1();
         });
       }, err => {
         if (err) console.error(err);
         // remove trailing ", "
+        if (string === start_string) return callback("");
         string = string.slice(0, -2);
         string += "]";
         return callback(string);
