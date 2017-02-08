@@ -1,6 +1,6 @@
 const routes = require('express').Router();
 const waterloo = require('./waterloo');
-const sort = require('../helpers/sort');
+const logic = require('../helpers/logic');
 const data = require('../routes/models/data');
 
 routes.get('/', function(req, res){
@@ -16,18 +16,18 @@ routes.get('/wat/:course/:number', function(req, res){
 
 routes.get('/wat/retrieve', function (req, res) {
   waterloo.getCourses(result => {
-    if (result == 1) res.send("Data retrieved successfully.");
-    else res.send("Data retrieval unsuccessful.");
+    if (result == 1) return res.send("Data retrieved successfully.");
+    res.send("Data retrieval unsuccessful.");
   });
 })
 
 routes.get('/update/:file', function (req, res) {
-  const file = req.params.file;
+  const file = req.params.file.toLowerCase();
   waterloo.getCourses (result => {
     if (file == "data") {
       data.resetData(result.data, (err, result) => {
-        if(err) res.send("Failed to update course list.");
-        else res.send("Course list updated successfully.  " + result)
+        if(err) return res.send("Failed to update course list.");
+        res.send("Course list updated successfully.  " + result)
       });
     }
     else if (file == "course_list") {
@@ -39,17 +39,28 @@ routes.get('/update/:file', function (req, res) {
     else if (file == "fill"){
       data.fillEntries((err, data) => {
         if(err) return res.send("Failed to fill course data.");
-        else res.send("Course data filled successfully. " + data);
+        res.send("Course data filled successfully. " + data);
       });
     }
   });
 });
 
+routes.get('/get/:file', function (req, res) {
+  const file = req.params.file.toUpperCase();
+  data.getJSON(data[file], (err, data) => {
+    if(err) {
+      console.error(err);
+      return res.send("Error retrieving " + file);
+    }
+    console.log(data);
+    res.send(data);
+  })
+})
+
 routes.get('/test', function (req, res) {
-  data.fill((err, courses) => {
-    //if(err) return console.log("Last Course: " + waterloo.last_course);
-    if(err) console.log("Failed");
-    res.send(courses);
+  logic.getPrereqs("PHYS", "434", (err, data) => {
+    console.log(err, data);
+    res.send(data);
   });
 })
 

@@ -17,7 +17,7 @@ function updateCourseList (res, callback) {
   });
   // sort courses alphanumerically
   courses.sort((a, b) =>
-  (a.subject < b.subject && a.catalog_number < b.catalog_number) ? -1 : 1);
+  (a.subject < b.subject || ((a.subject == b.subject) && a.catalog_number < b.catalog_number)) ? -1 : 1);
 
   const json = JSON.stringify(courses);
   fs.writeFile(COURSE_LIST, json, err => {
@@ -66,7 +66,7 @@ function resetData (res, callback) {
       console.error(err);
       callback(1, null);
     }
-    console.log(DATA + ' saved.');
+    console.log(sorted_json);
     callback(0, sorted_json);
   });
 }
@@ -114,11 +114,14 @@ function indexInArray (subject, arr) {
   return -1;
 }
 
-function getData(filepath, callback) {
+function getJSON(filepath, callback) {
   fs.readFile(filepath, 'utf8', (err, data) => {
-    if(err) return console.error(err);
+    if(err) {
+      console.error(err);
+      callback(err, null)
+    }
     const json_data = JSON.parse(data);
-    callback(json_data);
+    callback(null, json_data);
   });
 }
 
@@ -128,5 +131,5 @@ module.exports = {
   updateCourseList,
   resetData,
   fillEntries,
-  getData
+  getJSON
 }
