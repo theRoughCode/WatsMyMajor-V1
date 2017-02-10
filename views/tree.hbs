@@ -1,28 +1,32 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
-<style>
+<head>
+  <meta charset="UTF-8">
+  <title>Prerequisites</title>
+  <link rel="icon" href="/public/images/favicon.ico">
+  <link rel="stylesheet" type="text/css" href="../../stylesheets/style.css">
+  <style>
+    .node {
+      cursor: pointer;
+    }
 
-.node {
-  cursor: pointer;
-}
+    .node circle {
+      fill: #fff;
+      stroke: steelblue;
+      stroke-width: 1.5px;
+    }
 
-.node circle {
-  fill: #fff;
-  stroke: steelblue;
-  stroke-width: 1.5px;
-}
+    .node text {
+      font: 10px sans-serif;
+    }
 
-.node text {
-  font: 10px sans-serif;
-}
-
-.link {
-  fill: none;
-  stroke: #ccc;
-  stroke-width: 1.5px;
-}
-
-</style>
+    .link {
+      fill: none;
+      stroke: #ccc;
+      stroke-width: 1.5px;
+    }
+  </style>
+</head>
 <body>
 <script src="//d3js.org/d3.v3.min.js"></script>
 <script>
@@ -49,6 +53,9 @@ var svg = d3.select("body").append("svg")
 
 d3.json("tree.json", function(error, treeData) {
   if (error) throw error;
+
+  const title = document.querySelector('title');
+  title.textContent = treeData._root.data.subject + " " + treeData._root.data.catalog_number + " - Prerequisites";
 
   root = treeData._root;
   root.x0 = height / 2;

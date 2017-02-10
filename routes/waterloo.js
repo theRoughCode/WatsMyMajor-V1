@@ -72,7 +72,7 @@ function getRequisites(subject, course_number, callback) {
   getPrereqs(subject, course_number, (err, prereqs) =>
     uwclient.get(`/courses/${subject}/${course_number}.json`, function(err, res){
        if(err) console.error(err);
-       const course = res.data.subject + ' ' + res.data.catalog_number + ' - ' + res.data.title;
+       const course = subject + ' ' + course_number + ' - ' + res.data.title;
        const description = res.data.description;
        var antireqs = res.data.antirequisites;
        if(antireqs !== null) {
@@ -144,7 +144,9 @@ function getRequisites(subject, course_number, callback) {
          coreqs: coreqs,
          crosslistings: crosslistings,
          terms: terms,
-         string: string
+         string: string,
+         subject: subject,
+         catalog_number: course_number
        }
        callback(data);
      })

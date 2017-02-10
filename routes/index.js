@@ -81,7 +81,7 @@ routes.get('/trees/:subject/:cat_num', function (req, res) {
     tree._root.add(node);
     data.updateTree(tree, (err, json) => {
       if (err) return res.send("Failed to parse tree.");
-      console.log(json);
+      //console.log(json);
       res.redirect('/render');
     });
     /*tree.toString(string => {
