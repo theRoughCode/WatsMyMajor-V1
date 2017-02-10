@@ -79,10 +79,16 @@ routes.get('/trees/:subject/:cat_num', function (req, res) {
     }
     const tree = new Tree.Tree(subject, cat_num);
     tree._root.add(node);
-    data.updateTree(tree, (err, json) => {
-      if (err) return res.send("Failed to parse tree.");
-      //console.log(json);
-      res.redirect('/render');
+    tree.getDepth(depth => {
+      tree.getWidth(width => {
+        tree._root.width = width;
+        tree._root.depth = depth;
+        data.updateTree(tree, (err, json) => {
+          if (err) return res.send("Failed to parse tree.");
+          //console.log(json);
+          res.redirect('/render');
+        });
+      });
     });
     /*tree.toString(string => {
       console.log(string);

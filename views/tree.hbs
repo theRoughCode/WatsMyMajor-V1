@@ -32,42 +32,54 @@
     <a href="/">Home</a>
     <a id="back" href="#">Back to Course</a>
   </nav>
+  <h1></h1>
 <script src="//d3js.org/d3.v3.min.js"></script>
 <script>
+const screen_width = document.documentElement.clientWidth - 30;
+const screen_height = document.documentElement.clientHeight;
+// distance between parent and child nodes
+var line_dist = 180;
 
-var margin = {top: 20, right: 120, bottom: 20, left: 120},
-    width = 960 - margin.right - margin.left,
-    height = 800 - margin.top - margin.bottom;
+var margin = {top: 10, right: 120, bottom: 10, left: 120},
+    width = screen_width - margin.right - margin.left,
+    height = screen_height - margin.top - margin.bottom;
 
 var i = 0,
     duration = 750,
-    root;
-
-var tree = d3.layout.tree()
-    .size([height, width]);
+    root,
+    tree,
+    svg;
 
 var diagonal = d3.svg.diagonal()
     .projection(function(d) { return [d.y, d.x]; });
 
-var svg = d3.select("body").append("svg")
-    .attr("width", width + margin.right + margin.left)
-    .attr("height", height + margin.top + margin.bottom)
-  .append("g")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-d3.json("tree.json", function(error, treeData) {
+window.onload = d3.json("tree.json", function(error, treeData) {
   if (error) throw error;
 
+  const h1 = document.querySelector('h1');
   const title = document.querySelector('title');
   const link = document.querySelector('#back');
   const subject = treeData._root.data.subject;
   const catalog_number = treeData._root.data.catalog_number;
   title.textContent = subject + " " + catalog_number + " - Prerequisites";
+  h1.textContent = subject + " " + catalog_number + " - Prerequisites Tree";
   link.href = `/wat/${subject}/${catalog_number}`;
+  height -= (h1.offsetTop + h1.offsetHeight);
+
+  // set tree dimensions
+  tree = d3.layout.tree()
+      .size([height, width]);
+  // set svg dimension
+  svg = d3.select("body").append("svg")
+      .attr("width", width + margin.right + margin.left)
+      .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
   root = treeData._root;
   root.x0 = height / 2;
   root.y0 = 0;
+  line_dist = width / root.depth;
 
   function collapse(d) {
     if (d.children) {
@@ -82,7 +94,6 @@ d3.json("tree.json", function(error, treeData) {
 });
 
 d3.select(self.frameElement).style("height", "800px");
-
 function update(source) {
 
   // Compute the new tree layout.
@@ -90,7 +101,7 @@ function update(source) {
       links = tree.links(nodes);
 
   // Normalize for fixed-depth.
-  nodes.forEach(function(d) { d.y = d.depth * 180; });
+  nodes.forEach(function(d) { d.y = d.depth * line_dist; });
 
   // Update the nodes…
   var node = svg.selectAll("g.node")
@@ -107,7 +118,7 @@ function update(source) {
       .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
 
   nodeEnter.append("text")
-      .attr("x", function(d) { return d.children || d._children ? -10 : 10; })
+      .attr("x", function(d) { return d.children || d._children ? -13 : 13; })
       .attr("dy", ".35em")
       .attr("text-anchor", function(d) { return d.children || d._children ? "end" : "start"; })
       .text(function(d) { return d.name; })
@@ -119,7 +130,7 @@ function update(source) {
       .attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; });
 
   nodeUpdate.select("circle")
-      .attr("r", 4.5)
+      .attr("r", 8)
       .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
 
   nodeUpdate.select("text")
