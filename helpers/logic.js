@@ -4,16 +4,6 @@ const deprec_courses = [
   "CHEM256", "MATH108", "MATH125"
 ]
 
-function test (callback) {
-  data.getData(data.DATA, (err, res) => {
-    if(err) {
-      console.error(err);
-      return callback(err, null);
-    }
-    callback(null, res);
-  });
-}
-
 // returns all courses needed to take
 function getPrereqs (subject, cat_num, callback) {
   data.getJSON(data.DATA, (error, res) => {

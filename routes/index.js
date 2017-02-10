@@ -2,6 +2,7 @@ const routes = require('express').Router();
 const waterloo = require('./waterloo');
 const logic = require('../helpers/logic');
 const data = require('../routes/models/data');
+const trees = require('../helpers/trees');
 
 routes.get('/', function(req, res){
   res.render('index');
@@ -74,6 +75,30 @@ routes.get('/test/:subject/:cat_num', function (req, res) {
     }
     console.log(data);
     res.send(data);
+  });
+})
+
+routes.get('/trees', function(req, res) {
+  const tree =  new trees.Tree("MATH", "247");
+  /*tree.add("MATH", "146", "MATH", "247", tree.traverseBF);
+  tree.add("MATH", "148", "MATH", "247", tree.traverseBF);
+
+  tree.add('MATH', '145', "MATH", "146", tree.traverseBF);
+  tree.add('MATH', '147', "MATH", "148", tree.traverseBF);*/
+
+  var node1 = new trees.Node("MATH", "146");
+  node1.add(new trees.Node('MATH', '145'));
+  var node2 = new trees.Node("MATH", "148");
+  node2.add(new trees.Node('MATH', '147'));
+  tree._root.add(node1);
+  tree._root.add(node2);
+
+  tree.traverseDF(node => {
+    console.log(node.data.subject + node.data.catalog_number + ", layer: " + node.layer);
+    if(node.parent) console.log("Parent: " + node.parent.data.subject + node.parent.data.catalog_number + ", layer: " + node.parent.layer + "\n");
+  });
+  tree.depth(depth => {
+    tree.width(width => res.send("width: " + width + ", depth: " + depth));
   });
 })
 
