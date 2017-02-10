@@ -2,6 +2,7 @@ const async = require('async');
 
 // Create Node object
 function Node (subject, cat_num) {
+  this.name = subject + cat_num;
   this.data = {
     "choose": null,
     "subject": subject,
@@ -12,7 +13,7 @@ function Node (subject, cat_num) {
   this.children = [];
   // add to node
   this.add = function(node){
-    node.parent = this;
+    node.parent = this.name;
     this.children.push(node);
     // increment all node layer levels
     (function increment_layer(currentNode) {

@@ -25,19 +25,19 @@ routes.get('/wat/retrieve', function (req, res) {
 routes.get('/update/:file', function (req, res) {
   const file = req.params.file.toLowerCase();
   waterloo.getCourses (result => {
-    if (file == "data") {
+    if (file === "data") {
       data.resetData(result.data, (err, result) => {
         if(err) return res.send("Failed to update course list.");
         res.send("Course list updated successfully.  " + result)
       });
     }
-    else if (file == "course_list") {
+    else if (file === "course_list") {
       data.updateCourseList(result.data, (err, result) => {
         if(err) res.send("Failed to update course list.");
         else res.send("Course list updated successfully. " + result)
       });
     }
-    else if (file == "fill"){
+    else if (file === "fill"){
       data.fillEntries((err, data) => {
         if(err) return res.send("Failed to fill course data.");
         res.send("Course data filled successfully. " + data);
@@ -58,13 +58,17 @@ routes.get('/get/:file', function (req, res) {
   })
 })
 
-routes.get('/test/:subject/:cat_num', function (req, res) {
+routes.get('/test', function (req, res) {
+  res.render('tree');
+})
+
+routes.get('/trees/:subject/:cat_num', function (req, res) {
   const subject = req.params.subject.toUpperCase();
   const cat_num = req.params.cat_num;
 
   logic.getPrereqs(subject, cat_num, (err, node) => {
     if(err) {
-      var err_msg = "Course: " + subject + " " + cat_num + " not found!"
+      var err_msg = "Course: " + subject + " " + cat_num + " not found!";
       if(err === 2)
         err_msg = "Course: " + subject + " " + cat_num +
                         " has been deprecated!";
@@ -75,14 +79,23 @@ routes.get('/test/:subject/:cat_num', function (req, res) {
     }
     const tree = new Tree.Tree(subject, cat_num);
     tree._root.add(node);
-    tree.toString(string => {
+    data.updateTree(tree, (err, json) => {
+      if (err) return res.send("Failed to parse tree.");
+      console.log(json);
+      res.redirect('/render');
+    });
+    /*tree.toString(string => {
       console.log(string);
       res.send(string);
-    })
+    });*/
   });
 })
 
-routes.get('/trees', function(req, res) {
+routes.get('/render', function(req, res){
+  res.render('tree');
+})
+
+routes.get('/test', function(req, res) {
   const tree =  new trees.Tree("MATH", "247");
   /*tree.add("MATH", "146", "MATH", "247", tree.traverseBF);
   tree.add("MATH", "148", "MATH", "247", tree.traverseBF);
