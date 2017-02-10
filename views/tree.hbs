@@ -28,6 +28,10 @@
   </style>
 </head>
 <body>
+  <nav>
+    <a href="/">Home</a>
+    <a id="back" href="#">Back to Course</a>
+  </nav>
 <script src="//d3js.org/d3.v3.min.js"></script>
 <script>
 
@@ -55,7 +59,11 @@ d3.json("tree.json", function(error, treeData) {
   if (error) throw error;
 
   const title = document.querySelector('title');
-  title.textContent = treeData._root.data.subject + " " + treeData._root.data.catalog_number + " - Prerequisites";
+  const link = document.querySelector('#back');
+  const subject = treeData._root.data.subject;
+  const catalog_number = treeData._root.data.catalog_number;
+  title.textContent = subject + " " + catalog_number + " - Prerequisites";
+  link.href = `/wat/${subject}/${catalog_number}`;
 
   root = treeData._root;
   root.x0 = height / 2;
