@@ -126,52 +126,45 @@ Tree.prototype.getDepth = function (callback) {
 
 // Find width
 Tree.prototype.getWidth = function (callback) {
-  const space = 3;  // how many spaces between nodes
-
   const tree = this;
   var max_width = 1;
-  var max_char_length = 0;
-  var parent_width = 0;
   var width = 1;
-  var char_length = 0;
   var layer = 0;
   async.waterfall([
     function (callback1) {
       tree.traverseBF(node => {
-        if (node.layer === layer) {
-          width++;
-          char_length += node.data.subject.length +
-                             node.data.catalog_number.length;
-        }
+        if (node.layer === layer) width++;
         else {
           layer = node.layer;
-          char_length += space * (width + parent_width - 1);
           if (width > max_width) max_width = width;
-          parent_width = width;
           width = 1;
-          char_length = node.data.subject.length +
-                        node.data.catalog_number.length;
         }
       });
       if (width > max_width) max_width = width;
-      if(char_length > max_char_length) max_char_length = char_length;
-      max_char_length += (width - 1) * space;
       callback1(null, null);
     }
-  ], (err, result) => callback(max_width, max_char_length));
-
-  return width;
+  ], (err, result) => callback(max_width));
 };
 
 Tree.prototype.toString = function (callback) {
   var tree = this;
   tree.getDepth(depth => {
-    var arr = new Array(depth).fill("");
+    var string = "";
     async.waterfall([
       function (callback1) {
-        tree
+        var layer = 0;
+        tree.traverseBF(node => {
+          if (node.layer === layer) string += node.data.subject + node.data.catalog_number + "  ";
+          else {
+            string = string.slice(0, -2);
+            string += "\n" + node.data.subject + node.data.catalog_number
+                      + "  ";
+            layer = node.layer;
+          }
+        });
+        callback1(null, null);
       }
-    ])
+    ], (err, result) => callback(string));
   });
 };
 

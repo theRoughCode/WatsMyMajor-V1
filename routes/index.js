@@ -97,9 +97,13 @@ routes.get('/trees', function(req, res) {
     console.log(node.data.subject + node.data.catalog_number + ", layer: " + node.layer);
     if(node.parent) console.log("Parent: " + node.parent.data.subject + node.parent.data.catalog_number + ", layer: " + node.parent.layer + "\n");
   });
-  tree.getDepth(depth => {
+  tree.toString(string => {
+    console.log(string);
+    res.send(string);
+  })
+  /*tree.getDepth(depth => {
     tree.getWidth(width => res.send("width: " + width + ", depth: " + depth));
-  });
+  });*/
 })
 
 module.exports = routes;
