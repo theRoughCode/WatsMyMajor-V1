@@ -2,7 +2,7 @@ const routes = require('express').Router();
 const waterloo = require('./waterloo');
 const logic = require('../helpers/logic');
 const data = require('../routes/models/data');
-const trees = require('../helpers/trees');
+const Tree = require('../helpers/trees');
 
 routes.get('/', function(req, res){
   res.render('index');
@@ -62,7 +62,7 @@ routes.get('/test/:subject/:cat_num', function (req, res) {
   const subject = req.params.subject.toUpperCase();
   const cat_num = req.params.cat_num;
 
-  logic.getPrereqs(subject, cat_num, (err, data) => {
+  logic.getPrereqs(subject, cat_num, (err, node) => {
     if(err) {
       var err_msg = "Course: " + subject + " " + cat_num + " not found!"
       if(err === 2)
@@ -73,8 +73,12 @@ routes.get('/test/:subject/:cat_num', function (req, res) {
       console.error(err_msg);
       return res.send(err_msg);
     }
-    console.log(data);
-    res.send(data);
+    const tree = new Tree.Tree(subject, cat_num);
+    tree._root.add(node);
+    tree.toString(string => {
+      console.log(string);
+      res.send(string);
+    })
   });
 })
 

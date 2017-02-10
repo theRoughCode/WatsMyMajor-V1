@@ -3,6 +3,7 @@ const async = require('async');
 // Create Node object
 function Node (subject, cat_num) {
   this.data = {
+    "choose": null,
     "subject": subject,
     "catalog_number": cat_num
   }
@@ -154,11 +155,17 @@ Tree.prototype.toString = function (callback) {
       function (callback1) {
         var layer = 0;
         tree.traverseBF(node => {
-          if (node.layer === layer) string += node.data.subject + node.data.catalog_number + "  ";
+          if (node.layer === layer) {
+            if(node.data.choose === 0) string += "Take all of: ";
+            else if (node.data.choose !== null) string += "Choose " + node.data.choose + " of:  ";
+            else string += node.data.subject + node.data.catalog_number + "  ";
+          }
           else {
             string = string.slice(0, -2);
-            string += "\n" + node.data.subject + node.data.catalog_number
-                      + "  ";
+            string += "\n";
+            if(node.data.choose === 0) string += "Take all of: ";
+            else if(node.data.choose !== null) string += "Choose " + node.data.choose + " of:  ";
+            else string += node.data.subject + node.data.catalog_number + "  ";
             layer = node.layer;
           }
         });

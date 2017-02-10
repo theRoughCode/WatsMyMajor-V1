@@ -1,5 +1,6 @@
 const data = require('../routes/models/data');
 const async = require('async');
+const Tree = require('./trees');
 const deprec_courses = [
   "CHEM256", "MATH108", "MATH125"
 ]
@@ -7,7 +8,7 @@ const deprec_courses = [
 // returns all courses needed to take
 function getPrereqs (subject, cat_num, callback) {
   data.getJSON(data.DATA, (error, res) => {
-    retrievePrereqs(subject, cat_num, res, (err, str) => callback(err, str));
+    retrievePrereqs(subject, cat_num, res, (err, node) => callback(err, node));
   });
 }
 
@@ -22,13 +23,12 @@ function retrievePrereqs (subject, cat_num, dataset, callback) {
   const prereqs = dataset[subject][cat_num]["prereqs"];
   if(prereqs.length === 0) return callback(3, null);
 
-  dataToString(prereqs, dataset, string => callback(null, string));
+  dataToString(prereqs, dataset, node => callback(null, node));
 }
 
 // return (String)
 function dataToString (val, dataset, callback) {
   const val_type = typeof(val);
-  var string = "";
   if (val_type === "string") {
     // inserts white space between numbers and letters
     const re_space = /[^0-9\s](?=[0-9])/g;
@@ -36,47 +36,39 @@ function dataToString (val, dataset, callback) {
     const arr = val.split(" ");
     const subject = arr[0];
     const cat_num = arr[1];
-    retrievePrereqs(subject, cat_num, dataset, (err, str) => {
-      if (err) {
-        // if no prereqs
-        if(err === 3) return callback(val);
-        return callback(val);
-      }
-      val += " [" + str + "]";
-      return callback(val);
+    var node = new Tree.Node(subject, cat_num);
+    retrievePrereqs(subject, cat_num, dataset, (err, childNode) => {
+      if (!err) node.add(childNode);
+      return callback(node);
     });
   }
   else if (Array.isArray(val)) {
     // [1, "course 1", "course 2"]
     if (typeof(val[0]) === "number") {
-      string += "Choose " + val[0] + " of: ";
+      var node = new Tree.Node(null, null);
+      node.data.choose = val[0];
       async.eachSeries(val.slice(1), function (elem, callback1) {
-        dataToString(elem, dataset, res => {
-          string += res + ", ";
+        dataToString(elem, dataset, childNode => {
+          node.add(childNode);
           callback1();
         })
       }, err => {
         if(err) console.error(err);
-        string = string.slice(0, -2);
-        return callback(string);
+        return callback(node);
       })
     }
     // ["course 1", "course 2"]
     else {
-      const start_string = "All of: [";
-      string += start_string;
+      var node = new Tree.Node(null, null);
+      node.data.choose = 0;
       async.eachSeries(val, function (elem, callback1) {
-        dataToString(elem, dataset, res => {
-          string += res + ", ";
+        dataToString(elem, dataset, childNode => {
+          node.add(childNode);
           return callback1();
         });
       }, err => {
         if (err) console.error(err);
-        // remove trailing ", "
-        if (string === start_string) return callback("");
-        string = string.slice(0, -2);
-        string += "]";
-        return callback(string);
+        return callback(node);
       })
     }
   } else {
