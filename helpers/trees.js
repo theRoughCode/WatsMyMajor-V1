@@ -111,7 +111,7 @@ Tree.prototype.remove = function (subject, cat_num, parent_subject,
   return naughtyChild;
 };
 
-Tree.prototype.depth = function (callback) {
+Tree.prototype.getDepth = function (callback) {
   const tree = this;
   var depth = 0;
   async.waterfall([
@@ -125,32 +125,54 @@ Tree.prototype.depth = function (callback) {
 };
 
 // Find width
-Tree.prototype.width = function (callback) {
+Tree.prototype.getWidth = function (callback) {
+  const space = 3;  // how many spaces between nodes
+
   const tree = this;
   var max_width = 1;
+  var max_char_length = 0;
+  var parent_width = 0;
   var width = 1;
+  var char_length = 0;
   var layer = 0;
   async.waterfall([
     function (callback1) {
       tree.traverseBF(node => {
-        if (node.layer === layer) width++;
+        if (node.layer === layer) {
+          width++;
+          char_length += node.data.subject.length +
+                             node.data.catalog_number.length;
+        }
         else {
           layer = node.layer;
+          char_length += space * (width + parent_width - 1);
           if (width > max_width) max_width = width;
+          parent_width = width;
           width = 1;
+          char_length = node.data.subject.length +
+                        node.data.catalog_number.length;
         }
       });
       if (width > max_width) max_width = width;
+      if(char_length > max_char_length) max_char_length = char_length;
+      max_char_length += (width - 1) * space;
       callback1(null, null);
     }
-  ], (err, result) => callback(max_width));
+  ], (err, result) => callback(max_width, max_char_length));
 
   return width;
 };
 
-Tree.prototype.print = function () {
-  var currentTree = this;
-  var string = ""
+Tree.prototype.toString = function (callback) {
+  var tree = this;
+  tree.getDepth(depth => {
+    var arr = new Array(depth).fill("");
+    async.waterfall([
+      function (callback1) {
+        tree
+      }
+    ])
+  });
 };
 
 module.exports = {
