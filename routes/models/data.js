@@ -3,7 +3,6 @@ const waterloo = require('../waterloo');
 const async = require('async');
 const COURSE_LIST = './course_list.json';
 const DATA = './data.json';
-const TREE = './tree.json';
 
 // updates course_list.json.  Returns 1 if unsuccessful
 function updateCourseList (res, callback) {
@@ -72,18 +71,6 @@ function resetData (res, callback) {
   });
 }
 
-function updateTree(tree, callback) {
-  const json = JSON.stringify(tree);
-  fs.writeFile(TREE, json, 'utf8', err => {
-    if(err) {
-      console.error(err);
-      return callback(1, null);
-    }
-    console.log("Tree updated successfully.");
-    callback(0, json);
-  });
-}
-
 // fill out data set with requisites
 function fillEntries (callback) {
   fs.readFile(COURSE_LIST, 'utf8', (err, cl_data) => {
@@ -144,6 +131,5 @@ module.exports = {
   updateCourseList,
   resetData,
   fillEntries,
-  getJSON,
-  updateTree
+  getJSON
 }

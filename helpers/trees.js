@@ -147,7 +147,7 @@ Tree.prototype.getWidth = function (callback) {
     }
   ], (err, result) => callback(max_width));
 };
-
+/*
 Tree.prototype.toString = function (callback) {
   var tree = this;
   tree.getDepth(depth => {
@@ -174,7 +174,7 @@ Tree.prototype.toString = function (callback) {
       }
     ], (err, result) => callback(string));
   });
-};
+};*/
 
 module.exports = {
   Tree,

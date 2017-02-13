@@ -1,0 +1,4 @@
+Tree
+  - root node start from middle
+  - open to left, translate right
+  - course description of highlighted course on right

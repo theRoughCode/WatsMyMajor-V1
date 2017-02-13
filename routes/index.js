@@ -58,10 +58,6 @@ routes.get('/get/:file', function (req, res) {
   })
 })
 
-routes.get('/test', function (req, res) {
-  res.render('tree');
-})
-
 routes.get('/trees/:subject/:cat_num', function (req, res) {
   const subject = req.params.subject.toUpperCase();
   const cat_num = req.params.cat_num;
@@ -83,17 +79,10 @@ routes.get('/trees/:subject/:cat_num', function (req, res) {
       tree.getWidth(width => {
         tree._root.width = width;
         tree._root.depth = depth;
-        data.updateTree(tree, (err, json) => {
-          if (err) return res.send("Failed to parse tree.");
-          //console.log(json);
-          res.redirect('/render');
-        });
+        const tree_json = JSON.stringify(tree);
+        res.render('tree', { data: tree_json });
       });
     });
-    /*tree.toString(string => {
-      console.log(string);
-      res.send(string);
-    });*/
   });
 })
 
