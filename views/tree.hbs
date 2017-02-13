@@ -54,7 +54,7 @@ var diagonal = d3.svg.diagonal()
     .projection(function(d) { return [d.y, d.x]; });
 
 window.onload = function() {
-  var treeData = {{{ data }}};
+  var treeData = {{{ data }}};  // triple handlebars to disable HTML encoding
   const h1 = document.querySelector('h1');
   const title = document.querySelector('title');
   const link = document.querySelector('#back');
