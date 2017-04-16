@@ -113,6 +113,7 @@ Tree.prototype.remove = function (subject, cat_num, parent_subject,
   return naughtyChild;
 };
 
+// Find how many layers + update depth
 Tree.prototype.getDepth = function (callback) {
   const tree = this;
   var depth = 0;

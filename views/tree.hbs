@@ -93,8 +93,8 @@ window.onload = function() {
 };
 
 d3.select(self.frameElement).style("height", "800px");
-function update(source) {
 
+function update(source) {
   // Compute the new tree layout.
   var nodes = tree.nodes(root).reverse(),
       links = tree.links(nodes);
@@ -122,7 +122,7 @@ function update(source) {
         else if (hasChildren(d)) return 0;
         return 13;  // leaf node
       })
-      .attr("dy", function(d) { return hasChildren(d) && d.parent ? "1.35em" : "0.35em"; })
+      .attr("dy", function(d) { return hasChildren(d) && d.parent ? "1.45em" : "0.35em"; })
       .attr("text-anchor", function(d) {
         if (!d.parent) return "end";  // root node
         else if (hasChildren(d)) return "middle";

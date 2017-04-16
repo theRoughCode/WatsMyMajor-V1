@@ -5,14 +5,14 @@ const deprec_courses = [
   "CHEM256", "MATH108", "MATH125"
 ]
 
-// returns all courses needed to take
+// returns all courses needed to take in form of a tree
 function getPrereqs (subject, cat_num, callback) {
   data.getJSON(data.DATA, (error, res) => {
     retrievePrereqs(subject, cat_num, res, (err, node) => callback(err, node));
   });
 }
 
-// returns prereqs of course (err, string)
+// returns prereqs of course (err, Node)
 function retrievePrereqs (subject, cat_num, dataset, callback) {
   // course doesn't exist
   if (!dataset[subject][cat_num])
@@ -26,7 +26,7 @@ function retrievePrereqs (subject, cat_num, dataset, callback) {
   dataToString(prereqs, dataset, node => callback(null, node));
 }
 
-// return (String)
+// return (Node)
 function dataToString (val, dataset, callback) {
   const val_type = typeof(val);
   if (val_type === "string") {
