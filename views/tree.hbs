@@ -40,8 +40,8 @@ const screen_height = document.documentElement.clientHeight;
 // distance between parent and child nodes
 var line_dist = 180;
 
-var margin = {top: 10, right: 120, bottom: 10, left: 120},
-    width = screen_width - margin.right - margin.left,
+var margin = {top: 10, right: 60, bottom: 30, left: 120},
+    width = screen_width,
     height = screen_height - margin.top - margin.bottom;
 
 var i = 0,
@@ -63,22 +63,23 @@ window.onload = function() {
   title.textContent = subject + " " + catalog_number + " - Prerequisites";
   h1.textContent = subject + " " + catalog_number + " - Prerequisites Tree";
   link.href = `/wat/${subject}/${catalog_number}`;
-  height -= (h1.offsetTop + h1.offsetHeight);
+  const rect = h1.getBoundingClientRect();
+  height -= rect.bottom;
 
   // set tree dimensions
   tree = d3.layout.tree()
       .size([height, width]);
   // set svg dimension
   svg = d3.select("body").append("svg")
-      .attr("width", width + margin.right + margin.left)
-      .attr("height", height + margin.top + margin.bottom)
+      .attr("width", width)
+      .attr("height", height)
     .append("g")
       .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
   root = treeData._root;
   root.x0 = height / 2;
   root.y0 = 0;
-  line_dist = width / root.depth;
+  line_dist = (width - margin.left - margin.right) / (root.depth + 1);
 
   function collapse(d) {
     if (d.children) {
@@ -92,7 +93,7 @@ window.onload = function() {
   update(root);
 };
 
-d3.select(self.frameElement).style("height", "800px");
+d3.select(self.frameElement).style("height", height);
 
 function update(source) {
   // Compute the new tree layout.
