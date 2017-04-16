@@ -31,52 +31,20 @@ function getReqsGraph() {
       console.log(courses);
     });
   });
-  /*uwclient.get('/courses.json', function (err, res) {
-    const courses = [];
-    if(err) console.error(err);
-
-    res.data.forEach(course => {
-      var course_code = course.subject + course.catalog_number;
-
-      async.waterfall([function(callback) {
-        const subject = course.subject;
-        const course_number = course.catalog_number;
-        var prereqs;
-        getPrereqs(subject, course_number, reqs => callback(null, subject, course_number, reqs));
-      }, function (subject, course_number, prereqs, callback){
-        getCoreqs(subject, course_number, reqs => callback(null, subject, course_number, prereqs, reqs));
-      }, function (subject, course_number, prereqs, coreqs, callback) {
-        getAntireqs(subject, course_number, reqs => callback(null, prereqs, coreqs, reqs));
-      },
-      function (prereqs, coreqs, antireqs, callback) {
-        courses.push({
-          'course_code': course_code,
-          'prereqs': prereqs,
-          'antireqs': antireqs,
-          'coreqs': coreqs
-        });
-        callback(null, null);
-      }], function (err, results) {
-        if (err) console.error(err);
-        console.log(courses);
-      });
-      // sort courses alphanumerically
-      courses.sort((a, b) => (a.course_code < b.course_code) ? -1 : 1);
-      //console.log(courses);
-      })
-    });*/
 }
 
 // Use API
 function getRequisites(subject, course_number, callback) {
   getPrereqs(subject, course_number, (err, prereqs) =>
     uwclient.get(`/courses/${subject}/${course_number}.json`, function(err, res){
+       console.log(res.data.url);
        if(err) console.error(err);
        const course = subject + ' ' + course_number + ' - ' + res.data.title;
        const description = res.data.description;
        var antireqs = res.data.antirequisites;
        if(antireqs !== null) {
          antireqs = antireqs.replace(/\s+/g,'').split(',');
+         console.log(antireqs);
          antireqs.forEach((elem, index) => {
            if(!isNaN(elem.charAt(0))) {
              antireqs[index - 1] = antireqs[index - 1] + ", " + elem;
@@ -86,17 +54,17 @@ function getRequisites(subject, course_number, callback) {
        }
        var coreqs = res.data.corequisites;
        if (coreqs !== null) {
-         if(coreqs.slice(3,5) === 'of'){
+         if(coreqs.includes(" of ")){
            var num = coreqs.slice(0, 3);
            switch(num) {
              case 'One':
-             num = '1';
+             num = 1;
              break;
              case 'Two':
-             num = '2';
+             num = 2;
              break;
-             case 'Three':
-             num = '3';
+             case 'All':
+             num = null;
              break;
              default:
              console.error("Error reading corequisites");
@@ -104,37 +72,28 @@ function getRequisites(subject, course_number, callback) {
            coreqs = coreqs.slice(7,-1).replace(/\s+/g,'').split(',');
            coreqs.unshift(num);
          } else {
-           coreqs = coreqs.replace(/or/g,', ');
+           coreqs = coreqs.replace(/or/g,', ').split(',');
          }
        }
        var crosslistings = res.data.crosslistings;
        var terms = res.data.terms_offered;
 
        //OUTPUT STRING
-       var string = ("Course: " + subject + course_number + "\nPrerequisites:\n");
+       const prereqsString = [];
        // Prerequisites
        if(Array.isArray(prereqs)){
-         prereqs.forEach(elem => {
-           if (typeof elem[0]== 'number') string += pick(elem);
-           else string += ("   " + elem + "\n");
+         prereqs.forEach(prereq => {
+           if (typeof prereq[0] == 'number') prereqsString.push(pick(prereq));
+           else prereqsString.push(prereq);
          });
-       } else string += ("   " + prereqs + "\n");
+       } else prereqsString.push(prereqs);
+
        // Corequisites
-       string += ("\nCorequisites:\n");
-       if (Array.isArray(coreqs))
-         coreqs.forEach(coreq => string += ("   " + coreq + "\n"));
-       else string += ("   " + coreqs + "\n");
-       // Antirequisites
-       string += ("\nAntirequisites:\n");
-       if(Array.isArray(antireqs))
-         antireqs.forEach(antireq => string += ("   " + antireq + "\n"));
-       else string += ("   " + antireqs);
-       // Cross Listings
-       string += ("\nCross Listings:\n   " + crosslistings + "\n");
-       // Terms Offered
-       string += ("\nTerms Offered:\n");
-       terms.forEach(term => string += ("   " + term + "\n"));
-       console.log(string);
+       const coreqsString = [];
+       if (Array.isArray(coreqs)) {
+         if (typeof coreqs[0] == 'number') coreqsString.push(pick(coreqs));
+         else coreqs.forEach(coreq => coreqsString.push(coreq));
+       } else coreqsString.push(coreqs);
 
        const data = {
          course: course,
@@ -144,9 +103,13 @@ function getRequisites(subject, course_number, callback) {
          coreqs: coreqs,
          crosslistings: crosslistings,
          terms: terms,
-         string: string,
+         string: {
+           prereqs: prereqsString,
+           coreqs: coreqsString
+         },
          subject: subject,
-         catalog_number: course_number
+         catalog_number: course_number,
+         url: res.data.url
        }
        callback(data);
      })
@@ -162,11 +125,14 @@ function pick (arr) {
     if (typeof elem[0] === 'number'){
       num = elem[0];
       string += ("      Choose " + num + " of:\n");
-      elem.slice(1).forEach(elem2 => string += ("         " + elem2 + "\n"));
+      elem.slice(1).forEach(elem2 => string += (", " + elem2));
     }
-    else string += ("      " + elem + "\n");
+    else if (Array.isArray(elem)) {
+      string += ("All of: [" + elem + "]\n");
+    }
+    else string += ("" + elem + ",\n");
   });
-  return string;
+  return string.slice(0, -2);
 }
 
 function getPrereqs (subject, course_number, callback) {

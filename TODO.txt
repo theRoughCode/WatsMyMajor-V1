@@ -2,3 +2,8 @@ Tree
   - root node start from middle
   - open to left, translate right
   - course description of highlighted course on right
+  - path highlighting
+  - display course info on hover
+  - colour code courses
+  - group by term
+  - link to courses in page
