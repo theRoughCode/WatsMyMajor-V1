@@ -114,6 +114,7 @@ function indexInArray (subject, arr) {
   return -1;
 }
 
+// gets JSON from file
 function getJSON(filepath, callback) {
   fs.readFile(filepath, 'utf8', (err, data) => {
     if(err) {

@@ -47,7 +47,7 @@ function dataToString (val, dataset, callback) {
     if (typeof(val[0]) === "number") {
       var node = new Tree.Node(null, null);
       node.data.choose = val[0];
-      node.name = "Choose " + val[0];
+      node.name = null;
       async.eachSeries(val.slice(1), function (elem, callback1) {
         dataToString(elem, dataset, childNode => {
           node.add(childNode);
@@ -62,7 +62,7 @@ function dataToString (val, dataset, callback) {
     else {
       var node = new Tree.Node(null, null);
       node.data.choose = 0;
-      node.name = "All of";
+      node.name = null;
       async.eachSeries(val, function (elem, callback1) {
         dataToString(elem, dataset, childNode => {
           node.add(childNode);

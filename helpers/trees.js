@@ -4,7 +4,7 @@ const async = require('async');
 function Node (subject, cat_num) {
   this.name = subject + cat_num;
   this.data = {
-    "choose": null,
+    "choose": null,  // null = course, 0 = all of, > 0 = choose 1
     "subject": subject,
     "catalog_number": cat_num
   }

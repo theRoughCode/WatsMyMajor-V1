@@ -13,7 +13,7 @@
     .node circle {
       fill: #fff;
       stroke: steelblue;
-      stroke-width: 1.5px;
+      stroke-width: 0.05em;
     }
 
     .node text {
@@ -112,14 +112,22 @@ function update(source) {
       .attr("transform", function(d) { return "translate(" + source.y0 + "," + source.x0 + ")"; })
       .on("click", click);
 
-  nodeEnter.append("circle")
-      .attr("r", 1e-6)
-      .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
+  // add child circle
+  nodeEnter.append("circle").attr("r", 1e-6);
 
+  // style text
   nodeEnter.append("text")
-      .attr("x", function(d) { return d.children || d._children ? -13 : 13; })
-      .attr("dy", ".35em")
-      .attr("text-anchor", function(d) { return d.children || d._children ? "end" : "start"; })
+      .attr("x", function(d) {
+        if (!d.parent) return -13;  // root node
+        else if (hasChildren(d)) return 0;
+        return 13;  // leaf node
+      })
+      .attr("dy", function(d) { return hasChildren(d) && d.parent ? "1.35em" : "0.35em"; })
+      .attr("text-anchor", function(d) {
+        if (!d.parent) return "end";  // root node
+        else if (hasChildren(d)) return "middle";
+        return "start";  // leaf node
+      })
       .text(function(d) { return d.name; })
       .style("fill-opacity", 1e-6);
 
@@ -128,9 +136,22 @@ function update(source) {
       .duration(duration)
       .attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; });
 
+  // Change colour of node
   nodeUpdate.select("circle")
       .attr("r", 8)
-      .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
+      .style("fill", function(d) {
+        const choose = d.data.choose;
+        if (!d._children || d._children.length == 0) return "lightsteelblue";
+        if (choose === null) return "#fff";  // course
+        else if (choose === 0) return "#34b1ff";  // take all
+        else return "#31c66f";  // choose 1
+      })
+      .style("stroke", function(d) {
+        const choose = d.data.choose;
+        if (choose === null) return "steelblue";  // course
+        else if (choose === 0) return "#0048ff";  // take all
+        else return "#09962c";  // choose 1
+      });
 
   nodeUpdate.select("text")
       .style("fill-opacity", 1);
@@ -180,8 +201,15 @@ function update(source) {
   });
 }
 
+// return true if node has children
+const hasChildren = d => {
+  return !(!d.children && (!d._children || !d._children.length));
+};
+
 // Toggle children on click.
 function click(d) {
+  // has active children
+  if (!hasChildren(d)) return;
   if (d.children) {
     d._children = d.children;
     d.children = null;

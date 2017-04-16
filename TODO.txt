@@ -6,4 +6,4 @@ Tree
   - display course info on hover
   - colour code courses
   - group by term
-  - link to courses in page
+  - show route from course A to course B
