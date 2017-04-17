@@ -2,6 +2,7 @@ html {
   font-size: 10px;
   box-sizing: border-box;
 }
+
 body {
   background: #448cff;
   font-family: 'helvetica neue';
@@ -18,13 +19,17 @@ body {
 
 a {
   display: inline-block;
-  padding:5px;
+  padding:5px 8px;
   margin:0 20px;
   color:black;
   text-decoration: none;
   color:black;
   background:rgba(0,0,0,0.05);
   border-radius: 20px
+}
+
+a:hover {
+ background:rgba(0,0,0,0.1);
 }
 
 .words {
@@ -136,10 +141,4 @@ span.population {
 
 .hl {
  background:#ffc600;
-}
-
-a {
- color:black;
- background:rgba(0,0,0,0.1);
- text-decoration: none;
 }

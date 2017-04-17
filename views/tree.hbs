@@ -17,7 +17,7 @@
     }
 
     .node text {
-      font: 15px sans-serif;
+      font: 1.6vw sans-serif;
     }
 
     .link {
@@ -35,17 +35,21 @@
   <h1></h1>
 <script src="//d3js.org/d3.v3.min.js"></script>
 <script>
-const screen_width = document.documentElement.clientWidth - 30;
-const screen_height = document.documentElement.clientHeight;
-// distance between parent and child nodes
-var line_dist = 180;
+var screen_width = document.documentElement.clientWidth;
+var screen_height = document.documentElement.clientHeight;
 
-var margin = {top: 10, right: 60, bottom: 30, left: 120},
+var margin = {
+      top: 0.019 * screen_height,
+      right: 0.0586 * screen_width,
+      bottom: 0.0358 * screen_height,
+      left: 0.1172 * screen_width
+    },
     width = screen_width,
     height = screen_height - margin.top - margin.bottom;
 
 var i = 0,
     duration = 750,
+    treeData = {{{ data }}}, // triple handlebars to disable HTML encoding
     root,
     tree,
     svg;
@@ -53,8 +57,32 @@ var i = 0,
 var diagonal = d3.svg.diagonal()
     .projection(function(d) { return [d.y, d.x]; });
 
+window.onresize = resize;
+
+function resize() {
+  screen_width = document.documentElement.clientWidth;
+  screen_height = document.documentElement.clientHeight;
+  width = screen_width;
+  height = screen_height - margin.top - margin.bottom;
+  const h1 = document.querySelector('h1');
+  const rect = h1.getBoundingClientRect();
+  height -= rect.bottom;
+  margin = {
+        top: 0.019 * screen_height,
+        right: 0.0586 * screen_width,
+        bottom: 0.0358 * screen_height,
+        left: 0.1172 * screen_width
+      };
+
+  // update line
+  line_dist = (width - margin.left - margin.right) / (treeData._root.maxdepth + 1);
+  // Update root pos of Tree
+  d3.select("g").attr("transform", "translate(" + margin.left + ", " + margin.top + ")");
+  // update nodes
+  update(root);
+}
+
 window.onload = function() {
-  var treeData = {{{ data }}};  // triple handlebars to disable HTML encoding
   const h1 = document.querySelector('h1');
   const title = document.querySelector('title');
   const link = document.querySelector('#back');
@@ -71,7 +99,7 @@ window.onload = function() {
       .size([height, width]);
   // set svg dimension
   svg = d3.select("body").append("svg")
-      .attr("width", width)
+      .attr("width", "100%")
       .attr("height", height)
     .append("g")
       .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
@@ -79,7 +107,7 @@ window.onload = function() {
   root = treeData._root;
   root.x0 = height / 2;
   root.y0 = 0;
-  line_dist = (width - margin.left - margin.right) / (root.depth + 1);
+  line_dist = (width - margin.left - margin.right) / (root.maxdepth + 1);
 
   function collapse(d) {
     if (d.children) {

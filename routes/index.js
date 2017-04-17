@@ -77,8 +77,8 @@ routes.get('/trees/:subject/:cat_num', function (req, res) {
     tree._root.add(node);
     tree.getDepth(depth => {
       tree.getWidth(width => {
-        tree._root.width = width;
-        tree._root.depth = depth;
+        tree._root.maxwidth = width;
+        tree._root.maxdepth = depth;
         const tree_json = JSON.stringify(tree);
         res.render('tree', { data: tree_json });
       });
