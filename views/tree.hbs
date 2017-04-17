@@ -6,6 +6,38 @@
   <link rel="icon" href="/public/images/favicon.ico">
   <link rel="stylesheet" type="text/css" href="../../stylesheets/style.css">
   <style>
+    #container {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+
+    #tree {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    #desc {
+      width: 130px;
+      height: auto;
+      margin-right: 0;
+      border: 3px lightsteelblue;
+      border-style: inset;
+      background-color: rgba(193, 193, 193, 0.3);
+      transition: all 0.3s ease-in-out;
+      z-index: 10;
+    }
+
+    #legend {
+      margin-left: auto;
+      width: 20%;
+      height: auto;
+      z-index: 10;
+    }
+
     .node {
       cursor: pointer;
     }
@@ -13,7 +45,7 @@
     .node circle {
       fill: #fff;
       stroke: steelblue;
-      stroke-width: 0.05em;
+      stroke-width: 0.08em;
     }
 
     .node text {
@@ -23,7 +55,19 @@
     .link {
       fill: none;
       stroke: #ccc;
-      stroke-width: 1.5px;
+      stroke-width: 0.08em;
+    }
+
+    .circle {
+    	border-radius: 50%;
+    	width: 1em;
+    	height: 1em;
+    }
+
+    table {
+      padding-right: 1em;
+      border-spacing: 0.4em;
+      white-space: nowrap;
     }
   </style>
 </head>
@@ -33,6 +77,41 @@
     <a id="back" href="#">Back to Course</a>
   </nav>
   <h1></h1>
+  <div id="container">
+    <div id="tree"></div>
+    <div id="info" style="display: flex">
+      <div id="desc">
+        <table>
+          <tr>
+            <td><b>Course:</b></td>
+            <td id="course"></td>
+          </tr>
+        </table>
+      </div>
+      <div id="legend">
+        <table>
+          <tr>
+            <td valign="top">
+              <div class="circle" style="background: #31c66f;
+              border: 0.08em solid #09962c;"></div>
+            </td>
+            <td>
+              <p>Choose 1</p>
+            </td>
+          </tr>
+          <tr>
+            <td valign="top">
+              <div class="circle" style="background: #34b1ff; border: 0.08em solid #0048ff;"></div>
+            </td>
+            <td>
+              <p>Take All</p>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
 <script src="//d3js.org/d3.v3.min.js"></script>
 <script>
 var screen_width = document.documentElement.clientWidth;
@@ -98,7 +177,7 @@ window.onload = function() {
   tree = d3.layout.tree()
       .size([height, width]);
   // set svg dimension
-  svg = d3.select("body").append("svg")
+  svg = d3.select("#tree").append("svg")
       .attr("width", "100%")
       .attr("height", height)
     .append("g")
@@ -129,7 +208,7 @@ function update(source) {
       links = tree.links(nodes);
 
   // Normalize for fixed-depth.
-  nodes.forEach(function(d) { d.y = d.depth * line_dist; });
+  nodes.forEach(function(d) { d.y = d.depth * line_dist;  });
 
   // Update the nodes…
   var node = svg.selectAll("g.node")
@@ -139,7 +218,8 @@ function update(source) {
   var nodeEnter = node.enter().append("g")
       .attr("class", "node")
       .attr("transform", function(d) { return "translate(" + source.y0 + "," + source.x0 + ")"; })
-      .on("click", click);
+      .on("click", click)
+      .on("mouseover", nodeHover);
 
   // add child circle
   nodeEnter.append("circle").attr("r", 1e-6);
@@ -147,11 +227,11 @@ function update(source) {
   // style text
   nodeEnter.append("text")
       .attr("x", function(d) {
-        if (!d.parent) return -13;  // root node
+        if (!d.parent) return "-1.3em";  // root node
         else if (hasChildren(d)) return 0;
-        return 13;  // leaf node
+        return "1.3em";  // leaf node
       })
-      .attr("dy", function(d) { return hasChildren(d) && d.parent ? "1.45em" : "0.35em"; })
+      .attr("dy", function(d) { return hasChildren(d) && d.parent ? "1.85em" : "0.35em"; })
       .attr("text-anchor", function(d) {
         if (!d.parent) return "end";  // root node
         else if (hasChildren(d)) return "middle";
@@ -167,7 +247,7 @@ function update(source) {
 
   // Change colour of node
   nodeUpdate.select("circle")
-      .attr("r", 8)
+      .attr("r", "0.5em")
       .style("fill", function(d) {
         const choose = d.data.choose;
         if (!d._children || d._children.length == 0) return "lightsteelblue";
@@ -249,4 +329,13 @@ function click(d) {
   update(d);
 }
 
+// handle mouseovers
+function nodeHover(d) {
+  if (!d.name) return;
+  const desc = document.querySelector('#desc')
+  const course = document.querySelector('#course');
+  const tab = desc.querySelector('table');
+  course.innerHTML = d.name;
+  desc.style.width = `${tab.offsetWidth}px`;
+}
 </script>
