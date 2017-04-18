@@ -2,6 +2,7 @@ const routes = require('express').Router();
 const waterloo = require('./waterloo');
 const logic = require('../helpers/logic');
 const data = require('../routes/models/data');
+const update = require('../routes/models/update');
 const Tree = require('../helpers/trees');
 
 routes.get('/', function(req, res){
@@ -11,7 +12,7 @@ routes.get('/', function(req, res){
 routes.get('/wat/:course/:number', function(req, res){
   const course = req.params.course.toUpperCase();
   const number = req.params.number;
-  waterloo.getRequisites(course, number, output => {
+  waterloo.getReqInfo(course, number, output => {
     waterloo.getParentReqs(course, number, parents => {
       output["parPrereq"] = (parents[0].length > 0) ? parents[0] : null;
       output["parCoreq"] = (parents[1].length > 0) ? parents[1] : null;
@@ -29,26 +30,27 @@ routes.get('/wat/retrieve', function (req, res) {
 
 routes.get('/update/:type', function (req, res) {
   const type = req.params.type.toLowerCase();
-  waterloo.getCourses (result => {
-    if (type === "reset") {
-      data.resetData(result.data, (err, result) => {
-        if(err) return res.send("Failed to reset course list.");
-        res.send("Course list reset.  " + result)
-      });
-    }
-    else if (type === "course_list") {
-      data.updateCourseList(result.data, (err, result) => {
-        if(err) res.send("Failed to update course list.");
-        else res.send("Course list updated successfully. " + result)
-      });
-    }
-    else if (type === "fill"){
-      data.fillEntries((err, data) => {
-        if(err) return res.send("Failed to fill course data.");
-        res.send("Course data filled successfully. " + data);
-      });
-    }
-  });
+  if (type === 'fill') {
+    update.fillEntries((err, data) => {
+      if(err) return res.send("Failed to fill course data.");
+      res.send("Course data filled successfully. " + data);
+    });
+  } else {
+    waterloo.getCourses (result => {
+      if (type === "reset") {
+        update.resetData(result.data, (err, result) => {
+          if(err) return res.send("Failed to reset course list.");
+          res.send("Course list reset.  " + result)
+        });
+      }
+      else if (type === "course_list") {
+        update.updateCourseList(result.data, (err, result) => {
+          if(err) res.send("Failed to update course list.");
+          else res.send("Course list updated successfully. " + result)
+        });
+      }
+    });
+  }
 });
 
 routes.get('/get/:file', function (req, res) {
@@ -100,9 +102,9 @@ routes.get('/test/:subject/:cat_num', function(req, res) {
   const subject = req.params.subject.toUpperCase();
   const cat_num = req.params.cat_num;
 
-  waterloo.getReqs(subject, cat_num, (err, req) => {
-    console.log(req);
-    res.send(req);
+  waterloo.getPrereqs(subject, cat_num, (err, reqs) => {
+    console.log(reqs);
+    res.send(reqs);
   });
 })
 

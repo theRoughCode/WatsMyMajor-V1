@@ -1,14 +1,13 @@
 const watApi = require('uwaterloo-api');
 const fs = require('fs');
 const async = require('async');
+const data = require('./models/data');
 
 // Enable hiding of API Key
 require('dotenv').config();
 
-// filename for courses json file
-const course_list_filename = './course_list.json';
-const sorted_data_filename = './data.json';
 const TERM = '1175';  // Spring 2017, 1179 = Fall 2017
+
 // instantiate client
 var uwclient = new watApi({
   API_KEY : process.env.API_KEY
@@ -73,25 +72,17 @@ function getReqsGraph() {
 
 // Use API
 function getReqInfo(subject, course_number, callback) {
-  getPrereqs(subject, course_number, (err, prereqs) =>
+  getDataReqs(subject, course_number, reqs =>
     uwclient.get(`/courses/${subject}/${course_number}.json`, function(err, res){
        if(err) console.error(err);
        const course = subject + ' ' + course_number + ' - ' + res.data.title;
        const description = res.data.description;
-       var antireqs = res.data.antirequisites;
-       if(antireqs !== null) {
-         antireqs = antireqs.replace(/\s+/g,'').split(',');
-         antireqs.forEach((elem, index) => {
-           // if first char is letter
-           if(!isNaN(elem.charAt(0))) {
-             antireqs[index - 1] = antireqs[index - 1] + ", " + elem;
-             antireqs.splice(index, 1);
-           }
-         });
-       }
-       var coreqs = res.data.corequisites;
+       var prereqs = reqs.prereqs;
+       var coreqs = (reqs.coreqs) ? reqs.coreqs.join() : null;
+       var antireqs = reqs.antireqs;
        if (coreqs !== null) {
-         if(coreqs.includes(" of ")){
+         // Edge case of "Oneof"
+         if(coreqs.includes("of")){
            var num = coreqs.slice(0, 3);
            switch(num) {
              case 'One':
@@ -106,7 +97,7 @@ function getReqInfo(subject, course_number, callback) {
              default:
              console.error("Error reading corequisites");
            }
-           coreqs = coreqs.slice(7,-1).replace(/\s+/g,'').split(',');
+           coreqs = coreqs.slice(5,-1).replace(/\s+/g,'').split(',');
            coreqs.unshift(num);
          } else {
            coreqs = coreqs.replace(/or/g,', ').split(',');
@@ -118,11 +109,24 @@ function getReqInfo(subject, course_number, callback) {
        //OUTPUT STRING
        const prereqsString = [];
        // Prerequisites
-       if(Array.isArray(prereqs)){
-         prereqs.forEach(prereq => {
-           if (typeof prereq[0] == 'number') prereqsString.push(pick(prereq));
-           else prereqsString.push(prereq);
+       if(prereqs[0] === 1) {
+         let temp = [prereqs[0]];
+         prereqs.slice(1).forEach(elem => {
+           if(Array.isArray(elem)) temp = temp.concat(elem.slice(1));
+           else temp = temp.concat(elem);
          });
+         prereqs = temp;
+       }
+       if(Array.isArray(prereqs)){
+         // if first elem is a digit
+         if(!isNaN(prereqs[0])) prereqsString.push(pick(prereqs));
+         else {
+           console.log(prereqs);
+           prereqs.forEach(prereq => {
+             if (typeof prereq[0] == 'number') prereqsString.push(pick(prereq));
+             else prereqsString.push(prereq);
+           });
+         }
        } else prereqsString.push(prereqs);
 
        // Corequisites
@@ -172,6 +176,7 @@ function pick (arr) {
   return string.slice(0, -2);
 }
 
+// Gets prerequisites from UW-API
 function getPrereqs (subject, course_number, callback) {
   uwclient.get(`/courses/${subject}/${course_number}/prerequisites.json`, function(err, res){
      if(err) {
@@ -188,6 +193,7 @@ function getPrereqs (subject, course_number, callback) {
  })
 }
 
+//  Gets requisites from UW-API
 // returns object with prereqs, coreqs, and antireqs
 function getReqs(subject, course_number, callback) {
   getPrereqs(subject, course_number, (err, prereqs) => {
@@ -225,6 +231,7 @@ function getReqs(subject, course_number, callback) {
   });
 }
 
+// Gets courses from UW-API
 function getCourses (callback) {
   uwclient.get('/courses.json', function (err, res) {
     if (err) console.error(err);
@@ -232,10 +239,20 @@ function getCourses (callback) {
   })
 }
 
+
+// --------------------- DATA FROM JSON ----------------------------
+
+function getDataReqs(subject, cat_num, callback) {
+  data.getJSON(data.DATA, (err, json) => {
+    if(err) return callback(null);
+    callback(json[subject][cat_num]);
+  });
+}
+
 // returns [{courses that requires this as prereq}, {courses that requires
 //    this as coreq}]
 function getParentReqs(subject, cat_num, callback) {
-  data.getJSON(sorted_data_filename, (err, json) => {
+  data.getJSON(data.DATA, (err, json) => {
     if(err) return callback(null);
 
     const course = subject + cat_num;
@@ -243,17 +260,23 @@ function getParentReqs(subject, cat_num, callback) {
     const keys = Object.keys(json);
     var keysLeft = keys.length;
 
-    console.log(json["PHYS"]["234"]);
-
     if (keysLeft === 0) return callback(null);
 
     keys.forEach(subject => {
       data.filter(json[subject], [
         val => {
+          if(!val.prereqs) return false;
+          if (val.prereqs.isArray){
+            val.prereqs.forEach(elem => {
+              if (Array.isArray(elem)) elem.join();
+            });
+            val.prereqs.join();
+          }
           return (val.prereqs.includes(course));
         },
         val => {
-          return (val.coreqs.includes(course));
+          if(!val.coreqs) return false;
+          return (val.coreqs.join().includes(course));
       }], sub_list => {
         if(sub_list[0]) {
           const courses = Object.keys(sub_list[0]);
@@ -286,5 +309,6 @@ module.exports = {
   getCourses,
   getPrereqs,
   getReqs,
+  getDataReqs,
   getParentReqs
 }
