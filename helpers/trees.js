@@ -1,13 +1,9 @@
 const async = require('async');
+const waterloo = require('../routes/waterloo');
 
 // Create Node object
-function Node (subject, cat_num) {
+function Node (subject, cat_num, callback) {
   this.name = subject + cat_num;
-  this.data = {
-    "choose": null,  // null = course, 0 = all of, > 0 = choose 1
-    "subject": subject,
-    "catalog_number": cat_num
-  }
   this.layer = 0;
   this.parent = null;
   this.children = [];
@@ -23,13 +19,24 @@ function Node (subject, cat_num) {
       }
     })(node);
   }
+  waterloo.getCourseInfo(subject, cat_num, info => {
+    this.data = {
+      "choose": null,  // null = course, 0 = all of, > 0 = choose 1
+      "subject": subject,
+      "catalog_number": cat_num,
+      "datum": info
+    };
+    callback(this);
+  });
 }
 
 // Create Tree
-function Tree(subject, cat_num) {
-  const root_node = new Node(subject, cat_num);
-  this._root = root_node;
-  this.layer = 0;
+function Tree(subject, cat_num, callback) {
+  new Node(subject, cat_num, root_node => {
+    this._root = root_node;
+    this.layer = 0;
+    callback(this);
+  });
 }
 
 // Depth-first Traversal of Tree

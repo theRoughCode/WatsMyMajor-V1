@@ -56,7 +56,7 @@ routes.get('/get/:file', function (req, res) {
     console.log(data);
     res.send(data);
   })
-})
+});
 
 routes.get('/trees/:subject/:cat_num', function (req, res) {
   const subject = req.params.subject.toUpperCase();
@@ -73,18 +73,23 @@ routes.get('/trees/:subject/:cat_num', function (req, res) {
       console.error(err_msg);
       return res.send(err_msg);
     }
-    const tree = new Tree.Tree(subject, cat_num);
-    tree._root.add(node);
-    tree.getDepth(depth => {
-      tree.getWidth(width => {
-        tree._root.maxwidth = width;
-        tree._root.maxdepth = depth;
-        const tree_json = JSON.stringify(tree);
-        res.render('tree', { data: tree_json });
+    new Tree.Tree(subject, cat_num, tree => {
+      tree._root.add(node);
+      tree.getDepth(depth => {
+        tree.getWidth(width => {
+          tree._root.maxwidth = width;
+          tree._root.maxdepth = depth;
+          const tree_json = JSON.stringify(tree);
+          res.render('tree', {
+            subject: subject,
+            cat_num, cat_num,
+            data: tree_json
+          });
+        });
       });
     });
   });
-})
+});
 
 routes.get('/test', function(req, res) {
   //waterloo.getCoreqs("PHYS", "234", coreqs => res.send(coreqs));

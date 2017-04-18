@@ -21,21 +21,23 @@
     }
 
     #desc {
-      width: 130px;
+      width: 30%;
+      min-width: 30%;
+      max-width: 80%;
       height: auto;
       margin-right: 0;
       border: 3px lightsteelblue;
       border-style: inset;
       background-color: rgba(193, 193, 193, 0.3);
       transition: all 0.3s ease-in-out;
-      z-index: 10;
+      z-index: -10;
     }
 
     #legend {
       margin-left: auto;
       width: 20%;
       height: auto;
-      z-index: 10;
+      z-index: -10;
     }
 
     .node {
@@ -64,10 +66,29 @@
     	height: 1em;
     }
 
+    .loader {
+      border: 16px solid #f3f3f3; /* Light grey */
+      border-top: 16px solid #3498db; /* Blue */
+      border-radius: 50%;
+      width: 120px;
+      height: 120px;
+      animation: spin 2s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
     table {
       padding-right: 1em;
       border-spacing: 0.4em;
       white-space: nowrap;
+      color: inherit;
+    }
+
+    .hide-text {
+      color: rgba(193, 193, 193, 0);
     }
   </style>
 </head>
@@ -79,12 +100,24 @@
   <h1></h1>
   <div id="container">
     <div id="tree"></div>
-    <div id="info" style="display: flex">
+    <div id="info" style="display: flex;">
       <div id="desc">
         <table>
           <tr>
             <td><b>Course:</b></td>
             <td id="course"></td>
+          </tr>
+          <tr>
+            <td><b>Title:</b></td>
+            <td id="course_title"></td>
+          </tr>
+          <tr>
+            <td><b>Units:</b></td>
+            <td id="units"></td>
+          </tr>
+          <tr>
+            <td><b>Term Number:</b></td>
+            <td id="term"></td>
           </tr>
         </table>
       </div>
@@ -128,7 +161,7 @@ var margin = {
 
 var i = 0,
     duration = 750,
-    treeData = {{{ data }}}, // triple handlebars to disable HTML encoding
+    treeData = {{{ data }}},
     root,
     tree,
     svg;
@@ -165,14 +198,18 @@ window.onload = function() {
   const h1 = document.querySelector('h1');
   const title = document.querySelector('title');
   const link = document.querySelector('#back');
-  const subject = treeData._root.data.subject;
-  const catalog_number = treeData._root.data.catalog_number;
+  const subject = '{{ subject }}';
+  const catalog_number = '{{ cat_num }}';
   title.textContent = subject + " " + catalog_number + " - Prerequisites";
   h1.textContent = subject + " " + catalog_number + " - Prerequisites Tree";
   link.href = `/wat/${subject}/${catalog_number}`;
   const rect = h1.getBoundingClientRect();
   height -= rect.bottom;
 
+  createGraph();
+}
+
+function createGraph() {
   // set tree dimensions
   tree = d3.layout.tree()
       .size([height, width]);
@@ -308,6 +345,13 @@ function update(source) {
     d.x0 = d.x;
     d.y0 = d.y;
   });
+
+  const desc = document.querySelector('#desc');
+  if(desc.style.display === 'none') {
+    const loader = document.querySelector('.loader');
+    loader.style.display = 'none';
+    desc.style.display = 'auto';
+  }
 }
 
 // return true if node has children
@@ -332,10 +376,44 @@ function click(d) {
 // handle mouseovers
 function nodeHover(d) {
   if (!d.name) return;
-  const desc = document.querySelector('#desc')
   const course = document.querySelector('#course');
-  const tab = desc.querySelector('table');
+  const course_title = document.querySelector('#course_title');
+  const units = document.querySelector('#units');
+  const term = document.querySelector('#term');
   course.innerHTML = d.name;
+
+  var resize = false;  // true if need to resize
+
+  if (d.data.datum.title.length > course_title.innerHTML.length) resize = true;
+
+  if (resize) {
+    course.classList.add('hide-text');
+    course_title.classList.add('hide-text');
+    units.classList.add('hide-text');
+    term.classList.add('hide-text');
+  }
+
+  if(d.data.datum){
+    course_title.innerHTML = d.data.datum.title;
+    units.innerHTML = d.data.datum.units;
+    term.innerHTML = d.data.datum.term;
+  } else {
+    course_title.innerHTML = "";
+    units.innerHTML = "";
+    term.innerHTML = "";
+  }
+
+  const desc = document.querySelector('#desc')
+  const tab = desc.querySelector('table');
   desc.style.width = `${tab.offsetWidth}px`;
+
+  if (!resize) return;
+
+  setTimeout( () => {
+    course.classList.remove('hide-text');
+    course_title.classList.remove('hide-text');
+    units.classList.remove('hide-text');
+    term.classList.remove('hide-text');
+  }, 300);
 }
 </script>

@@ -17,7 +17,7 @@ body {
   margin-bottom: 50px;
 }
 
-a {
+nav a {
   display: inline-block;
   padding:5px 8px;
   margin:0 20px;
@@ -28,7 +28,7 @@ a {
   border-radius: 20px
 }
 
-a:hover {
+nav a:hover {
  background:rgba(0,0,0,0.1);
 }
 
@@ -51,7 +51,14 @@ p {
   position: fixed;
   bottom: 0;
   text-align: left;
-  left: 30px
+  left: 1em;
+}
+
+#waiver {
+  position: fixed;
+  bottom: 0;
+  text-align: right;
+  right: 1em;
 }
 
 .words:before {

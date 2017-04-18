@@ -1,4 +1,5 @@
 const data = require('../routes/models/data');
+const waterloo = require('../routes/waterloo');
 const async = require('async');
 const Tree = require('./trees');
 const deprec_courses = [
@@ -36,42 +37,45 @@ function dataToString (val, dataset, callback) {
     const arr = val.split(" ");
     const subject = arr[0];
     const cat_num = arr[1];
-    var node = new Tree.Node(subject, cat_num);
-    retrievePrereqs(subject, cat_num, dataset, (err, childNode) => {
-      if (!err) node.add(childNode);
-      return callback(node);
+    new Tree.Node(subject, cat_num, node => {
+      retrievePrereqs(subject, cat_num, dataset, (err, childNode) => {
+        if (!err) node.add(childNode);
+        return callback(node);
+      });
     });
   }
   else if (Array.isArray(val)) {
     // [1, "course 1", "course 2"]
     if (typeof(val[0]) === "number") {
-      var node = new Tree.Node(null, null);
-      node.data.choose = val[0];
-      node.name = null;
-      async.eachSeries(val.slice(1), function (elem, callback1) {
-        dataToString(elem, dataset, childNode => {
-          node.add(childNode);
-          callback1();
+      new Tree.Node(null, null, node => {
+        node.data.choose = val[0];
+        node.name = null;
+        async.eachSeries(val.slice(1), function (elem, callback1) {
+          dataToString(elem, dataset, childNode => {
+            node.add(childNode);
+            callback1();
+          })
+        }, err => {
+          if(err) console.error(err);
+          return callback(node);
         })
-      }, err => {
-        if(err) console.error(err);
-        return callback(node);
-      })
+      });
     }
     // ["course 1", "course 2"]
     else {
-      var node = new Tree.Node(null, null);
-      node.data.choose = 0;
-      node.name = null;
-      async.eachSeries(val, function (elem, callback1) {
-        dataToString(elem, dataset, childNode => {
-          node.add(childNode);
-          return callback1();
-        });
-      }, err => {
-        if (err) console.error(err);
-        return callback(node);
-      })
+      new Tree.Node(null, null, node => {
+        node.data.choose = 0;
+        node.name = null;
+        async.eachSeries(val, function (elem, callback1) {
+          dataToString(elem, dataset, childNode => {
+            node.add(childNode);
+            return callback1();
+          });
+        }, err => {
+          if (err) console.error(err);
+          return callback(node);
+        })
+      });
     }
   } else {
     console.log("ERROR: This should not be running.");

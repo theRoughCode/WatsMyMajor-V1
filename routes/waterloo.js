@@ -8,11 +8,49 @@ require('dotenv').config();
 // filename for courses json file
 const course_list_filename = './course_list.json';
 const sorted_data_filename = './sorted.json';
-
+const TERM = '1175';  // Spring 2017, 1179 = Fall 2017
 // instantiate client
 var uwclient = new watApi({
   API_KEY : process.env.API_KEY
 })
+
+function getCourseInfo(subject, cat_num, callback) {
+  uwclient.get(`/terms/${TERM}/${subject}/${cat_num}/schedule.json`, function(err, res) {
+    if(err) return callback(null);
+    if (res.data.length === 0) return callback(null);
+    //console.log(res.data[0].subject + res.data[0].catalog_number);
+
+    const units = res.data[0].units;
+    const title = res.data[0].title;
+
+    const classes = [];
+    res.data.forEach(course => {
+      const info = {
+        class_number: course.class_number,
+        enrol_cap: course.enrollment_capacity,
+        enrol_total: course.enrollment_total,
+        wait_cap: course.waiting_capacity,
+        wait_total: course.waiting_total,
+        days: course.classes[0].date.weekdays,
+        start_time: course.classes[0].date.start_time,
+        end_time: course.classes[0].date.end_time,
+        instructors: course.classes[0].instructors,
+        is_cancelled: course.classes[0].date.is_cancelled,
+        is_closed: course.classes[0].date.is_closed,
+        building: course.classes[0].location.building,
+        room: course.classes[0].location.room
+      };
+      classes.push(info);
+    });
+    const data = {
+      units: units,
+      title: title,
+      term: TERM,
+      classes: classes
+    }
+    return callback(data);
+  });
+}
 
 function getReqsGraph() {
   fs.readFile(filename, 'utf8', (err, data) => {
@@ -160,6 +198,7 @@ function getCourses (callback) {
 
 // Exports
 module.exports = {
+  getCourseInfo,
   getRequisites,
   getCourses,
   getPrereqs
