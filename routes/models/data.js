@@ -2,6 +2,7 @@ const fs = require('fs');
 const waterloo = require('../waterloo');
 const async = require('async');
 const COURSE_LIST = './course_list.json';
+const TEST = './test.json';
 const DATA = './data.json';
 
 // updates course_list.json.  Returns 1 if unsuccessful
@@ -78,22 +79,24 @@ function fillEntries (callback) {
       console.error(err);
       return callback(err, null);
     }
-    fs.readFile(DATA, 'utf8', (err, d_data) => {
+    fs.readFile(TEST, 'utf8', (err, d_data) => {
       const course_list = JSON.parse(cl_data);  // list of sorted courses
       const data = JSON.parse(d_data); // data object of courses
 
-      async.eachLimit(course_list, 50, function (course, callback1) {
+      async.eachLimit(course_list, 100, function (course, callback1) {
         const subject = course.subject;
         const catalog_number = course.catalog_number;
-        waterloo.getPrereqs(subject, catalog_number, (err, res) => {
-          if (err || !res) return callback1();
-          data[subject][catalog_number]["prereqs"] = res;
-          console.log(subject + catalog_number + ", res: " + res);
+        waterloo.getReqs(subject, catalog_number, (err, res) => {
+          if(err) return callback1();
+          data[subject][catalog_number]["prereqs"] = res.prereqs;
+          data[subject][catalog_number]["coreqs"] = res.coreqs;
+          data[subject][catalog_number]["antireqs"] = res.antireqs;
+          console.log(subject + catalog_number + ", res: { prereqs: " + res.prereqs + ", coreqs: " + res.coreqs + ", antireqs: " + res.antireqs + "}");
           callback1();
         });
       }, function (err) {
         const data_json = JSON.stringify(data);
-        fs.writeFile(DATA, data_json, 'utf8', (err) => {
+        fs.writeFile(TEST, data_json, 'utf8', (err) => {
           if (err) {
             console.error(err);
             return callback(err, null);
@@ -126,11 +129,36 @@ function getJSON(filepath, callback) {
   });
 }
 
+// filter JSON
+function filter(json, pred_arr, callback) {
+  if (!Array.isArray(pred_arr) || pred_arr.length === 0) return callback(null);
+
+  const result = new Array(pred_arr.length);
+
+  const keys = Object.keys(json);
+  var keysLeft = keys.length;
+
+  if (keysLeft === 0) return callback(null);
+
+  keys.forEach(key => {
+    if(json.hasOwnProperty(key)) {
+      for (var i = 0; i < pred_arr.length; i++) {
+        if(pred_arr[i](json[key])) {
+          if(typeof result[i] !== 'object') result[i] = {};
+          result[i][key] = json[key];
+        }
+      }
+    }
+    if (--keysLeft === 0) return callback(result);
+  });
+}
+
 module.exports = {
   COURSE_LIST,
   DATA,
   updateCourseList,
   resetData,
   fillEntries,
-  getJSON
+  getJSON,
+  filter
 }

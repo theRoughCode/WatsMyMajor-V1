@@ -9,10 +9,15 @@ routes.get('/', function(req, res){
 })
 
 routes.get('/wat/:course/:number', function(req, res){
-  var course = req.params.course;
-  var number = req.params.number;
-  waterloo.getRequisites(course, number, output =>
-    res.render('results', output));
+  const course = req.params.course.toUpperCase();
+  const number = req.params.number;
+  waterloo.getRequisites(course, number, output => {
+    waterloo.getParentReqs(course, number, parents => {
+      output["parPrereq"] = (parents[0].length > 0) ? parents[0] : null;
+      output["parCoreq"] = (parents[1].length > 0) ? parents[1] : null;
+      res.render('results', output);
+    });
+  });
 })
 
 routes.get('/wat/retrieve', function (req, res) {
@@ -22,22 +27,22 @@ routes.get('/wat/retrieve', function (req, res) {
   });
 })
 
-routes.get('/update/:file', function (req, res) {
-  const file = req.params.file.toLowerCase();
+routes.get('/update/:type', function (req, res) {
+  const type = req.params.type.toLowerCase();
   waterloo.getCourses (result => {
-    if (file === "data") {
+    if (type === "reset") {
       data.resetData(result.data, (err, result) => {
-        if(err) return res.send("Failed to update course list.");
-        res.send("Course list updated successfully.  " + result)
+        if(err) return res.send("Failed to reset course list.");
+        res.send("Course list reset.  " + result)
       });
     }
-    else if (file === "course_list") {
+    else if (type === "course_list") {
       data.updateCourseList(result.data, (err, result) => {
         if(err) res.send("Failed to update course list.");
         else res.send("Course list updated successfully. " + result)
       });
     }
-    else if (file === "fill"){
+    else if (type === "fill"){
       data.fillEntries((err, data) => {
         if(err) return res.send("Failed to fill course data.");
         res.send("Course data filled successfully. " + data);
@@ -91,8 +96,14 @@ routes.get('/trees/:subject/:cat_num', function (req, res) {
   });
 });
 
-routes.get('/test', function(req, res) {
-  //waterloo.getCoreqs("PHYS", "234", coreqs => res.send(coreqs));
+routes.get('/test/:subject/:cat_num', function(req, res) {
+  const subject = req.params.subject.toUpperCase();
+  const cat_num = req.params.cat_num;
+
+  waterloo.getReqs(subject, cat_num, (err, req) => {
+    console.log(req);
+    res.send(req);
+  });
 })
 
 module.exports = routes;

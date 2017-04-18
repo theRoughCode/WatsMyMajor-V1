@@ -7,7 +7,7 @@ require('dotenv').config();
 
 // filename for courses json file
 const course_list_filename = './course_list.json';
-const sorted_data_filename = './sorted.json';
+const sorted_data_filename = './data.json';
 const TERM = '1175';  // Spring 2017, 1179 = Fall 2017
 // instantiate client
 var uwclient = new watApi({
@@ -52,12 +52,13 @@ function getCourseInfo(subject, cat_num, callback) {
   });
 }
 
+/*
 function getReqsGraph() {
   fs.readFile(filename, 'utf8', (err, data) => {
     if(err) return console.error(err);
     var courses = JSON.parse(data);
     async.each(courses, function(course, callback){
-      getRequisites(course.subject, course.catalog_number, function(requisites) {
+      getReqInfo(course.subject, course.catalog_number, function(requisites) {
         course.prereqs = requisites[0];
         course.coreqs = requisites[1];
         course.antireqs = requisites[2];
@@ -68,10 +69,10 @@ function getReqsGraph() {
       console.log(courses);
     });
   });
-}
+}*/
 
 // Use API
-function getRequisites(subject, course_number, callback) {
+function getReqInfo(subject, course_number, callback) {
   getPrereqs(subject, course_number, (err, prereqs) =>
     uwclient.get(`/courses/${subject}/${course_number}.json`, function(err, res){
        if(err) console.error(err);
@@ -80,8 +81,8 @@ function getRequisites(subject, course_number, callback) {
        var antireqs = res.data.antirequisites;
        if(antireqs !== null) {
          antireqs = antireqs.replace(/\s+/g,'').split(',');
-         console.log(antireqs);
          antireqs.forEach((elem, index) => {
+           // if first char is letter
            if(!isNaN(elem.charAt(0))) {
              antireqs[index - 1] = antireqs[index - 1] + ", " + elem;
              antireqs.splice(index, 1);
@@ -187,6 +188,43 @@ function getPrereqs (subject, course_number, callback) {
  })
 }
 
+// returns object with prereqs, coreqs, and antireqs
+function getReqs(subject, course_number, callback) {
+  getPrereqs(subject, course_number, (err, prereqs) => {
+    if(err) return callback(err, null);
+    // for courses that don't have prereqs
+    if(prereqs === 'undefined' || !prereqs) prereqs = null;
+
+    uwclient.get(`/courses/${subject}/${course_number}.json`, (err, res) => {
+      if(err) return callback(err, null);
+      var coreqs, antireqs;
+      if ((coreqs = res.data.corequisites)) {
+        coreqs = coreqs.replace(/\s+/g, '').split(',');
+        // add course subject for those without
+        coreqs.forEach((coreq, index) => {
+          if(!isNaN(coreq.charAt(0)))
+            coreqs[index] = coreqs[index - 1].replace(/[0-9]/g, '') + coreq;
+        });
+      }
+      if ((antireqs = res.data.antirequisites)) {
+        // remove whitespace and split by comma
+        antireqs = antireqs.replace(/\s+/g, '').split(',');
+        // add course subject for those without
+        antireqs.forEach((antireq, index) => {
+          if(!isNaN(antireq.charAt(0)) && index > 0)
+            antireqs[index] = antireqs[index - 1].replace(/[0-9]/g, '') + antireq;
+        });
+      }
+
+      return callback(null, {
+        prereqs: prereqs,
+        coreqs: coreqs,
+        antireqs: antireqs
+      });
+    });
+  });
+}
+
 function getCourses (callback) {
   uwclient.get('/courses.json', function (err, res) {
     if (err) console.error(err);
@@ -194,10 +232,59 @@ function getCourses (callback) {
   })
 }
 
+// returns [{courses that requires this as prereq}, {courses that requires
+//    this as coreq}]
+function getParentReqs(subject, cat_num, callback) {
+  data.getJSON(sorted_data_filename, (err, json) => {
+    if(err) return callback(null);
+
+    const course = subject + cat_num;
+    const filtered = [[], []];
+    const keys = Object.keys(json);
+    var keysLeft = keys.length;
+
+    console.log(json["PHYS"]["234"]);
+
+    if (keysLeft === 0) return callback(null);
+
+    keys.forEach(subject => {
+      data.filter(json[subject], [
+        val => {
+          return (val.prereqs.includes(course));
+        },
+        val => {
+          return (val.coreqs.includes(course));
+      }], sub_list => {
+        if(sub_list[0]) {
+          const courses = Object.keys(sub_list[0]);
+          filtered[0].push(...courses.map(num => {
+            return ({
+              subject: subject,
+              cat_num: num
+            });
+          }));
+        }
+        if(sub_list[1]) {
+          const courses = Object.keys(sub_list[1]);
+          filtered[1].push(...courses.map(num => {
+            return ({
+              subject: subject,
+              cat_num: num
+            });
+          }));
+        }
+      })
+      if (--keysLeft === 0) return callback(filtered);
+    });
+  });
+}
+
 // Exports
 module.exports = {
   getCourseInfo,
-  getRequisites,
+  getReqInfo,
   getCourses,
-  getPrereqs
+  getPrereqs,
+  getReqs,
+  getParentReqs
 }
