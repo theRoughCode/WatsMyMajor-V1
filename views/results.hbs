@@ -17,7 +17,9 @@
     {{/if}}
   </nav>
   <h1>{{ course }}</h1>
-  <p>Offered in: {{ terms }}</p>
+  {{#if terms}}
+    <p>Offered in: {{ terms }}</p>
+  {{/if}}
   <div class="words" contenteditable>
     {{ description }}
   </div>
