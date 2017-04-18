@@ -22,8 +22,6 @@
 
     #desc {
       width: 30%;
-      min-width: 30%;
-      max-width: 80%;
       height: auto;
       margin-right: 0;
       border: 3px lightsteelblue;
@@ -37,6 +35,7 @@
       margin-left: auto;
       width: 20%;
       height: auto;
+      white-space: nowrap;
       z-index: -10;
     }
 
@@ -83,8 +82,16 @@
     table {
       padding-right: 1em;
       border-spacing: 0.4em;
-      white-space: nowrap;
       color: inherit;
+    }
+
+    .nowrap {
+      white-space: nowrap;
+    }
+
+    .header {
+      font-weight: bold;
+      white-space: nowrap;
     }
 
     .hide-text {
@@ -104,19 +111,19 @@
       <div id="desc">
         <table>
           <tr>
-            <td><b>Course:</b></td>
+            <td class="header">Course:</td>
             <td id="course"></td>
           </tr>
           <tr>
-            <td><b>Title:</b></td>
+            <td class="header">Title:</td>
             <td id="course_title"></td>
           </tr>
           <tr>
-            <td><b>Units:</b></td>
+            <td class="header">Units:</td>
             <td id="units"></td>
           </tr>
           <tr>
-            <td><b>Term Number:</b></td>
+            <td class="header">Term Number:</td>
             <td id="term"></td>
           </tr>
         </table>
@@ -186,12 +193,28 @@ function resize() {
         left: 0.1172 * screen_width
       };
 
+  resizeDesc();
+
   // update line
   line_dist = (width - margin.left - margin.right) / (treeData._root.maxdepth + 1);
   // Update root pos of Tree
   d3.select("g").attr("transform", "translate(" + margin.left + ", " + margin.top + ")");
   // update nodes
   update(root);
+}
+
+// Resize course description box
+function resizeDesc() {
+  const maxWidthPercent = 0.8;
+  const maxWidth = maxWidthPercent * screen_width;
+  const desc = document.querySelector('#desc')
+  const tab = desc.querySelector('table');
+  // cause wrap if reached max width
+  if (tab.offsetWidth > maxWidth) desc.classList.remove('nowrap');
+  else if(!desc.classList.contains('nowrap')) desc.classList.add('nowrap');
+
+  desc.style.width = `${tab.offsetWidth}px`;
+  desc.style.height = `${tab.offsetHeight}px`;
 }
 
 window.onload = function() {
@@ -205,6 +228,8 @@ window.onload = function() {
   link.href = `/wat/${subject}/${catalog_number}`;
   const rect = h1.getBoundingClientRect();
   height -= rect.bottom;
+
+  resizeDesc();
 
   createGraph();
 }
@@ -380,13 +405,15 @@ function nodeHover(d) {
   const course_title = document.querySelector('#course_title');
   const units = document.querySelector('#units');
   const term = document.querySelector('#term');
+  const headers = document.querySelectorAll('.header');
   course.innerHTML = d.name;
 
-  var resize = false;  // true if need to resize
+  var enlarge = false;  // true if need to resize
 
-  if (d.data.datum.title.length > course_title.innerHTML.length) resize = true;
+  if (d.data.datum && d.data.datum.title.length > course_title.innerHTML.length) enlarge = true;
 
-  if (resize) {
+  if (enlarge) {
+    headers.forEach(header => header.classList.add('hide-text'));
     course.classList.add('hide-text');
     course_title.classList.add('hide-text');
     units.classList.add('hide-text');
@@ -403,13 +430,12 @@ function nodeHover(d) {
     term.innerHTML = "";
   }
 
-  const desc = document.querySelector('#desc')
-  const tab = desc.querySelector('table');
-  desc.style.width = `${tab.offsetWidth}px`;
+  resizeDesc();
 
-  if (!resize) return;
+  if (!enlarge) return;
 
   setTimeout( () => {
+    headers.forEach(header => header.classList.remove('hide-text'));
     course.classList.remove('hide-text');
     course_title.classList.remove('hide-text');
     units.classList.remove('hide-text');
