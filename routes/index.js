@@ -82,7 +82,7 @@ routes.get('/trees/:subject/:cat_num', function (req, res) {
           const tree_json = JSON.stringify(tree);
           res.render('tree', {
             subject: subject,
-            cat_num, cat_num,
+            cat_num: cat_num,
             data: tree_json
           });
         });

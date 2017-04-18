@@ -61,7 +61,6 @@ function getReqsGraph() {
         course.prereqs = requisites[0];
         course.coreqs = requisites[1];
         course.antireqs = requisites[2];
-        console.log(requisites[0]);
         callback();
       });
     }, err => {
@@ -75,7 +74,6 @@ function getReqsGraph() {
 function getRequisites(subject, course_number, callback) {
   getPrereqs(subject, course_number, (err, prereqs) =>
     uwclient.get(`/courses/${subject}/${course_number}.json`, function(err, res){
-       console.log(res.data.url);
        if(err) console.error(err);
        const course = subject + ' ' + course_number + ' - ' + res.data.title;
        const description = res.data.description;
