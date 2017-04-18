@@ -86,16 +86,16 @@ function getReqInfo(subject, course_number, callback) {
            var num = coreqs.slice(0, 3);
            switch(num) {
              case 'One':
-             num = 1;
-             break;
+               num = 1;
+               break;
              case 'Two':
-             num = 2;
-             break;
+               num = 2;
+               break;
              case 'All':
-             num = null;
-             break;
+               num = null;
+               break;
              default:
-             console.error("Error reading corequisites");
+               console.error("Error reading corequisites");
            }
            coreqs = coreqs.slice(5,-1).replace(/\s+/g,'').split(',');
            coreqs.unshift(num);
