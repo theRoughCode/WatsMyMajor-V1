@@ -17,13 +17,15 @@ body {
   margin-bottom: 50px;
 }
 
+a {
+  text-decoration: none;
+  color:black;
+}
+
 nav a {
   display: inline-block;
   padding:5px 8px;
   margin:0 20px;
-  color:black;
-  text-decoration: none;
-  color:black;
   background:rgba(0,0,0,0.05);
   border-radius: 20px
 }
