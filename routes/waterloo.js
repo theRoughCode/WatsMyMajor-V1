@@ -260,7 +260,19 @@ function getParentReqs(subject, cat_num, callback) {
                   return true;
                 }
               } else if(elem === course) {  // Mandatory prereq
-                val.prereqs["optional"] = chooseOne;
+                if(chooseOne) {
+                  const regStr = eval(`/${elem.slice(0, -2)}[0-9]${elem.slice(-1)}/i`);
+
+                  // > -1 if advanced course is available
+                  var alt_index = prereqs.indexOf(regStr);
+                  prereqs.forEach(req => {
+                    if(req !== elem && regStr.test(req)) {
+                      val.prereqs["alternate"] = prereqs[index + 1];
+                      val.prereqs["optional"] = false;
+                    }
+                  });
+                  if (!val.prereqs["alternate"]) val.prereqs["optional"] = true;
+                }
                 return true;
               }
             });
@@ -310,7 +322,8 @@ function getParentReqs(subject, cat_num, callback) {
             filtered[0].push({
               subject: subject,
               cat_num: key,
-              optional: sub_list[0][key]['prereqs']['optional']
+              optional: sub_list[0][key]['prereqs']['optional'],
+              alternate: sub_list[0][key]['prereqs']['alternate'] || null
             });
           });
         }
@@ -318,7 +331,6 @@ function getParentReqs(subject, cat_num, callback) {
         if(sub_list[1]) {
           const courses = Object.keys(sub_list[1]);
           courses.forEach(key => {
-            console.log(sub_list[1][key]['coreqs']);
             filtered[1].push({
               subject: subject,
               cat_num: key,

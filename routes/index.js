@@ -102,7 +102,7 @@ routes.get('/test/:subject/:cat_num', function(req, res) {
   const subject = req.params.subject.toUpperCase();
   const cat_num = req.params.cat_num;
 
-  waterloo.getParentReqs(subject, cat_num, reqs => {
+  data.getCourseData(subject, cat_num, reqs => {
     console.log(reqs);
     res.send(reqs);
   });

@@ -50,8 +50,11 @@
     {{#each parPrereq}}
       <li>{{ this.subject }} {{ this.cat_num }}
         {{#unless this.optional}}
-          (Mandatory)
+          [Mandatory]
         {{/unless}}
+        {{#if this.alternate}}
+          <i>(Can also take: {{ this.alternate }})</i>
+        {{/if}}
       </li>
     {{/each}}
   {{/if}}
