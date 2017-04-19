@@ -46,7 +46,7 @@ function filter(json, pred_arr, callback) {
 function getCourseData(subject, cat_num, callback) {
   getJSON(DATA, (err, json) => {
     if(err) callback(null);
-    
+
     return callback((json && json[subject] && json[subject][cat_num]) ? json[subject][cat_num] : null);
   });
 }

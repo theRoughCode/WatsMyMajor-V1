@@ -241,41 +241,83 @@ function getParentReqs(subject, cat_num, callback) {
     var keysLeft = keys.length;
 
     if (keysLeft === 0) return callback(null);
-
     keys.forEach(subject => {
       data.filter(json[subject], [
         val => {
           if(!val.prereqs) return false;
 
+          var prereqs = val.prereqs;
           if (Array.isArray(val.prereqs)){
-            val.prereqs.forEach((elem, index) => {
-              if (Array.isArray(elem)) val.prereqs[index] = elem.join();
+            prereqs.forEach((elem, index) => {
+              // choose 1
+              if (Array.isArray(elem)) {
+                prereqs[index] = elem.join();
+                // if course is among choose 1
+                if(prereqs[index].includes(course)){
+                  val.prereqs["optional"] = true;
+                  return true;
+                }
+              } else if(elem === course) {  // Mandatory prereq
+                val.prereqs["optional"] = false;
+                return true;
+              }
             });
-            val.prereqs = val.prereqs.join();
+            prereqs = prereqs.join();
           }
-          return (val.prereqs.includes(course));
+          return (prereqs.includes(course));
         },
         val => {
           if(!val.coreqs) return false;
-          return (val.coreqs.join().includes(course));
+
+          var coreqs = val.coreqs;
+          if (Array.isArray(val.coreqs)){
+            coreqs.forEach((elem, index) => {
+              // choose 1
+              if (Array.isArray(elem)) {
+                coreqs[index] = elem.join();
+                // if course is among choose 1
+                if(coreqs[index].includes(course)){
+                  val.coreqs["optional"] = true;
+                  return true;
+                }
+              }
+              if(elem.includes(course)) {  // Mandatory coreq
+                // optional if only course is specified
+                val.coreqs["optional"] = (elem.includes('or'));
+                return true;
+              }
+            });
+            coreqs = coreqs.join();
+          }
+          if(val.coreqs['optional']) return true;
+
+          if(coreqs.includes(course)) {
+            val.coreqs["optional"] = false;
+            return true;
+          } else return false;
       }], sub_list => {
+        // has this course as prereq
         if(sub_list[0]) {
           const courses = Object.keys(sub_list[0]);
-          filtered[0].push(...courses.map(num => {
-            return ({
+          courses.forEach(key => {
+            filtered[0].push({
               subject: subject,
-              cat_num: num
+              cat_num: key,
+              optional: sub_list[0][key]['prereqs']['optional']
             });
-          }));
+          });
         }
+        // has this course as coreq
         if(sub_list[1]) {
           const courses = Object.keys(sub_list[1]);
-          filtered[1].push(...courses.map(num => {
-            return ({
+          courses.forEach(key => {
+            console.log(sub_list[1][key]['coreqs']);
+            filtered[1].push({
               subject: subject,
-              cat_num: num
+              cat_num: key,
+              optional: sub_list[1][key]['coreqs']['optional']
             });
-          }));
+          });
         }
       })
       if (--keysLeft === 0) return callback(filtered);

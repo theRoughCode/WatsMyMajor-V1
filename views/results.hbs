@@ -48,13 +48,21 @@
   {{#if parPrereq}}
     <h2>Requires {{ subject }} {{ catalog_number }} As A Prerequisite</h2>
     {{#each parPrereq}}
-      <li>{{ this.subject }} {{ this.cat_num}}</li>
+      <li>{{ this.subject }} {{ this.cat_num }}
+        {{#unless this.optional}}
+          (Mandatory)
+        {{/unless}}
+      </li>
     {{/each}}
   {{/if}}
   {{#if parCoreq}}
     <h2>Requires {{ subject }} {{ catalog_number }} As A Corequisite</h2>
     {{#each parCoreq}}
-      <li>{{ this.subject }} {{ this.cat_num}}</li>
+      <li>{{ this.subject }} {{ this.cat_num }}
+        {{#unless this.optional}}
+          (Mandatory)
+        {{/unless}}
+      </li>
     {{/each}}
   {{/if}}
 </body>
