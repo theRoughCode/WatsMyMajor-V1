@@ -247,7 +247,9 @@ function getParentReqs(subject, cat_num, callback) {
           if(!val.prereqs) return false;
 
           var prereqs = val.prereqs;
+
           if (Array.isArray(val.prereqs)){
+            var chooseOne = (!isNaN(prereqs[0]) || typeof prereqs[0] === 'number');  // true if choose one
             prereqs.forEach((elem, index) => {
               // choose 1
               if (Array.isArray(elem)) {
@@ -258,13 +260,18 @@ function getParentReqs(subject, cat_num, callback) {
                   return true;
                 }
               } else if(elem === course) {  // Mandatory prereq
-                val.prereqs["optional"] = false;
+                val.prereqs["optional"] = chooseOne;
                 return true;
               }
             });
             prereqs = prereqs.join();
           }
-          return (prereqs.includes(course));
+          if(val.prereqs['optional']) return true;
+
+          if(prereqs.includes(course)) {
+            val.prereqs["optional"] = false;
+            return true;
+          } else return false;
         },
         val => {
           if(!val.coreqs) return false;
