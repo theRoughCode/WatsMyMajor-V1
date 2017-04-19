@@ -22,7 +22,7 @@ function retrievePrereqs (subject, cat_num, dataset, callback) {
   if(deprec_courses.indexOf(subject + cat_num) > -1)
     return callback(2, null);
   const prereqs = dataset[subject][cat_num]["prereqs"];
-  if(prereqs.length === 0) return callback(3, null);
+  if(!prereqs || prereqs.length === 0) return callback(3, null);
 
   dataToString(prereqs, dataset, node => callback(null, node));
 }
