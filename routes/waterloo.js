@@ -51,25 +51,6 @@ function getCourseInfo(subject, cat_num, callback) {
   });
 }
 
-/*
-function getReqsGraph() {
-  fs.readFile(filename, 'utf8', (err, data) => {
-    if(err) return console.error(err);
-    var courses = JSON.parse(data);
-    async.each(courses, function(course, callback){
-      getReqInfo(course.subject, course.catalog_number, function(requisites) {
-        course.prereqs = requisites[0];
-        course.coreqs = requisites[1];
-        course.antireqs = requisites[2];
-        callback();
-      });
-    }, err => {
-      if(err) return console.error(err);
-      console.log(courses);
-    });
-  });
-}*/
-
 // Use API
 function getReqInfo(subject, course_number, callback) {
   getDataReqs(subject, course_number, reqs =>
@@ -121,7 +102,6 @@ function getReqInfo(subject, course_number, callback) {
          // if first elem is a digit
          if(!isNaN(prereqs[0])) prereqsString.push(pick(prereqs));
          else {
-           console.log(prereqs);
            prereqs.forEach(prereq => {
              if (typeof prereq[0] == 'number') prereqsString.push(pick(prereq));
              else prereqsString.push(prereq);
@@ -266,11 +246,12 @@ function getParentReqs(subject, cat_num, callback) {
       data.filter(json[subject], [
         val => {
           if(!val.prereqs) return false;
-          if (val.prereqs.isArray){
-            val.prereqs.forEach(elem => {
-              if (Array.isArray(elem)) elem.join();
+
+          if (Array.isArray(val.prereqs)){
+            val.prereqs.forEach((elem, index) => {
+              if (Array.isArray(elem)) val.prereqs[index] = elem.join();
             });
-            val.prereqs.join();
+            val.prereqs = val.prereqs.join();
           }
           return (val.prereqs.includes(course));
         },

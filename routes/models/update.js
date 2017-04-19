@@ -83,7 +83,7 @@ function fillEntries (callback) {
       console.error(err);
       return callback(err, null);
     }
-    fs.readFile(TEST, 'utf8', (err, d_data) => {
+    fs.readFile(DATA, 'utf8', (err, d_data) => {
       const course_list = JSON.parse(cl_data);  // list of sorted courses
       const data = JSON.parse(d_data); // data object of courses
 
@@ -100,7 +100,7 @@ function fillEntries (callback) {
         });
       }, function (err) {
         const data_json = JSON.stringify(data);
-        fs.writeFile(TEST, data_json, 'utf8', (err) => {
+        fs.writeFile(DATA, data_json, 'utf8', (err) => {
           if (err) {
             console.error(err);
             return callback(err, null);
