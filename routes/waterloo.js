@@ -110,7 +110,7 @@ function getReqInfo(subject, course_number, callback) {
        const prereqsString = [];
        // Prerequisites
        if(prereqs && prereqs[0] === 1) {
-         var temp = [prereqs[0]];
+         let temp = [prereqs[0]];
          prereqs.slice(1).forEach(elem => {
            if(Array.isArray(elem)) temp = temp.concat(elem.slice(1));
            else temp = temp.concat(elem);
