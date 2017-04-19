@@ -60,7 +60,13 @@ function getReqInfo(subject, course_number, callback) {
        const description = res.data.description;
        var prereqs = reqs.prereqs;
        var coreqs = (reqs.coreqs) ? reqs.coreqs.join() : null;
-       var antireqs = reqs.antireqs;
+       var antireqs = (reqs.antireqs)
+          ? ((Array.isArray(reqs.antireqs))
+              ? reqs.antireqs.map(elem => {
+                return `<a href='${getLink(elem)}'>${elem}</a>`;
+              })
+              : `<a href='${getLink(reqs.antireqs)}'>${reqs.antireqs}</a>`)
+          : reqs.antireqs;
        if (coreqs !== null) {
          // Edge case of "Oneof"
          if(coreqs.includes("of")){
@@ -113,8 +119,8 @@ function getReqInfo(subject, course_number, callback) {
        const coreqsString = [];
        if (Array.isArray(coreqs)) {
          if (typeof coreqs[0] == 'number') coreqsString.push(pick(coreqs));
-         else coreqs.forEach(coreq => coreqsString.push(coreq));
-       } else coreqsString.push(coreqs);
+         else coreqs.forEach(coreq => coreqsString.push(`<li><a href='${getLink(coreq)}'>${coreq}</a></li>`));
+       } else coreqsString.push(`<li><a href='${getLink(coreqs)}'>${coreqs}</a></li>`);
 
        const data = {
          course: course,
@@ -141,19 +147,30 @@ function getReqInfo(subject, course_number, callback) {
 function pick (arr) {
   var string = "";
   var num = arr[0];
-  string += ("   Choose " + num + " of:\n");
+  string += ("   Choose " + num + " of:<ul type='circle'>");
   arr.slice(1).forEach(elem => {
     if (typeof elem[0] === 'number'){
       num = elem[0];
-      string += ("      Choose " + num + " of:\n");
-      elem.slice(1).forEach(elem2 => string += (", " + elem2));
+      string += ("      Choose " + num + " of:<ul>");
+      elem.slice(1).forEach(elem2 => string += `<li><a href='${getLink(elem2)}'>${elem2}</a></li>`);
     }
     else if (Array.isArray(elem)) {
-      string += ("All of: [" + elem + "]\n");
+      string += ("All of:<ul>");
+      elem.forEach(elem2 => string += `<li><a href='${getLink(elem2)}'>${elem2}</a></li>`);
     }
-    else string += ("" + elem + ",\n");
+    else string += `<li><a href='${getLink(elem)}'>${elem}</a></li>`;
   });
-  return string.slice(0, -2);
+  return string + "</ul>";
+}
+
+function getLink(course) {
+  if(!course) return null;
+  var firstDig = course.search(/\d/);
+  var index = course.indexOf(firstDig);
+  const subject = course.slice(0, firstDig);
+  const cat_num = course.slice(firstDig);
+  const link = `/wat/${subject}/${cat_num}`;
+  return link;
 }
 
 // Gets prerequisites from UW-API

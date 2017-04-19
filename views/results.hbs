@@ -26,19 +26,19 @@
   {{#if prereqs}}
     <h2>Prerequisites:</h2>
     {{#each string.prereqs}}
-      <li>{{ this }}</li>
+      <li>{{{ this }}}</li>
     {{/each}}
   {{/if}}
   {{#if coreqs}}
     <h2>Corequisites</h2>
     {{#each string.coreqs}}
-      <li>{{ this }}</li>
+      <li>{{{ this }}}</li>
     {{/each}}
   {{/if}}
   {{#if antireqs}}
     <h2>Antirequisites</h2>
     {{#each antireqs}}
-      <li>{{ this }}</li>
+      <li>{{{ this }}}</li>
     {{/each}}
   {{/if}}
   {{#if crosslistings}}
@@ -48,7 +48,7 @@
   {{#if parPrereq}}
     <h2>Requires {{ subject }} {{ catalog_number }} As A Prerequisite</h2>
     {{#each parPrereq}}
-      <li>{{ this.subject }} {{ this.cat_num }}
+      <li><a href="/wat/{{ this.subject }}/{{ this.cat_num }}">{{ this.subject }} {{ this.cat_num }}</a>
         {{#unless this.optional}}
           [Mandatory]
         {{/unless}}
@@ -61,7 +61,7 @@
   {{#if parCoreq}}
     <h2>Requires {{ subject }} {{ catalog_number }} As A Corequisite</h2>
     {{#each parCoreq}}
-      <li>{{ this.subject }} {{ this.cat_num }}
+      <li><a href="/wat/{{ this.subject }}/{{ this.cat_num }}">{{ this.subject }} {{ this.cat_num }}</a>
         {{#unless this.optional}}
           (Mandatory)
         {{/unless}}
