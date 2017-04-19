@@ -6,3 +6,4 @@ Tree
   - group by term
   - show route from course A to course B
   - term enrolment
+  - Fix URL links (eg. AMATH 271, 261)

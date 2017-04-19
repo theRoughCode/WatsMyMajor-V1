@@ -17,7 +17,6 @@ function getCourseInfo(subject, cat_num, callback) {
   uwclient.get(`/terms/${TERM}/${subject}/${cat_num}/schedule.json`, function(err, res) {
     if(err) return callback(null);
     if (res.data.length === 0) return callback(null);
-    //console.log(res.data[0].subject + res.data[0].catalog_number);
 
     const units = res.data[0].units;
     const title = res.data[0].title;
@@ -63,9 +62,9 @@ function getReqInfo(subject, course_number, callback) {
        var antireqs = (reqs.antireqs)
           ? ((Array.isArray(reqs.antireqs))
               ? reqs.antireqs.map(elem => {
-                return `<a href='${getLink(elem)}'>${elem}</a>`;
+                return `${getLink(elem)}`;
               })
-              : `<a href='${getLink(reqs.antireqs)}'>${reqs.antireqs}</a>`)
+              : `${getLink(reqs.antireqs)}`)
           : reqs.antireqs;
        if (coreqs !== null) {
          // Edge case of "Oneof"
@@ -91,6 +90,11 @@ function getReqInfo(subject, course_number, callback) {
          }
        }
        var crosslistings = res.data.crosslistings;
+       crosslistings = (Array.isArray(crosslistings))
+          ? crosslistings.map(cl => {
+             return `${getLink(cl)}`;
+           })
+          : `${getLink(crosslistings)}`;
        var terms = res.data.terms_offered;
 
        //OUTPUT STRING
@@ -110,17 +114,17 @@ function getReqInfo(subject, course_number, callback) {
          else {
            prereqs.forEach(prereq => {
              if (typeof prereq[0] == 'number') prereqsString.push(pick(prereq));
-             else prereqsString.push(prereq);
+             else prereqsString.push(`${getLink(prereq)}`);
            });
          }
-       } else prereqsString.push(prereqs);
+       } else prereqsString.push(`${getLink(prereq)}`);
 
        // Corequisites
        const coreqsString = [];
        if (Array.isArray(coreqs)) {
          if (typeof coreqs[0] == 'number') coreqsString.push(pick(coreqs));
-         else coreqs.forEach(coreq => coreqsString.push(`<li><a href='${getLink(coreq)}'>${coreq}</a></li>`));
-       } else coreqsString.push(`<li><a href='${getLink(coreqs)}'>${coreqs}</a></li>`);
+         else coreqs.forEach(coreq => coreqsString.push(`${getLink(coreq)}`));
+       } else coreqsString.push(`${getLink(coreqs)}`);
 
        const data = {
          course: course,
@@ -152,25 +156,29 @@ function pick (arr) {
     if (typeof elem[0] === 'number'){
       num = elem[0];
       string += ("      Choose " + num + " of:<ul>");
-      elem.slice(1).forEach(elem2 => string += `<li><a href='${getLink(elem2)}'>${elem2}</a></li>`);
+      elem.slice(1).forEach(elem2 => string += `<li>${getLink(elem2)}</li>`);
     }
     else if (Array.isArray(elem)) {
       string += ("All of:<ul>");
-      elem.forEach(elem2 => string += `<li><a href='${getLink(elem2)}'>${elem2}</a></li>`);
+      elem.forEach(elem2 => string += `<li>${getLink(elem2)}></li>`);
     }
-    else string += `<li><a href='${getLink(elem)}'>${elem}</a></li>`;
+    else string += `<li>${getLink(elem)}</li>`;
   });
   return string + "</ul>";
 }
 
 function getLink(course) {
-  if(!course) return null;
-  var firstDig = course.search(/\d/);
-  var index = course.indexOf(firstDig);
-  const subject = course.slice(0, firstDig);
-  const cat_num = course.slice(firstDig);
-  const link = `/wat/${subject}/${cat_num}`;
-  return link;
+  if(!course) return ``;
+  var checkSpecial = new RegExp('[^A-z0-9]', 'g');
+  course = course.replace(checkSpecial, '');
+  var index = course.search(/[0-9]/);
+  const subject = course.slice(0, index);
+  const cat_num = course.slice(index);
+  if (!subject || ! cat_num || checkSpecial.test(subject) || checkSpecial.test(cat_num)) {
+    return `${course}`;
+  } else {
+    return `<a href='/wat/${subject}/${cat_num}'>${course}</a>`;
+  }
 }
 
 // Gets prerequisites from UW-API
