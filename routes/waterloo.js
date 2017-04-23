@@ -117,7 +117,7 @@ function getReqInfo(subject, course_number, callback) {
              else prereqsString.push(`${getLink(prereq)}`);
            });
          }
-       } else prereqsString.push(`${getLink(prereq)}`);
+       } else prereqsString.push(`${getLink(prereqs)}`);
 
        // Corequisites
        const coreqsString = [];
