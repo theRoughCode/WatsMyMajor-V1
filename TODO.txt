@@ -6,5 +6,6 @@ Tree
   - group by term
   - show route from course A to course B
   - term enrolment
-  - Fix URL links (eg. AMATH 271, 261)
+  - Fix URL links (eg. PHYS 242, amath 361, chem 335l, afm 321)
+  - implement insertion of subject earlier
   - obfuscate JS code via uglifyjs

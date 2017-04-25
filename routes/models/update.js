@@ -25,7 +25,7 @@ function updateCourseList (res, callback) {
   (a.subject < b.subject || ((a.subject == b.subject) && a.catalog_number < b.catalog_number)) ? -1 : 1);
 
   const json = JSON.stringify(courses);
-  fs.writeFile(COURSE_LIST, json, err => {
+  data.write(COURSE_LIST, json, err => {
     if (err) {
       console.error(err);
       callback(1, null);
@@ -66,7 +66,7 @@ function resetData (res, callback) {
 
   var sorted_json = JSON.stringify(sorted_courses);
 
-  fs.writeFile(DATA, sorted_json, 'utf8', err => {
+  data.write(DATA, sorted_json, 'utf8', err => {
     if(err) {
       console.error(err);
       return callback(1, null);
@@ -78,29 +78,26 @@ function resetData (res, callback) {
 
 // fill out data set with requisites
 function fillEntries (callback) {
-  fs.readFile(COURSE_LIST, 'utf8', (err, cl_data) => {
+  data.getJSON(COURSE_LIST, (err, course_list) => {
     if (err) {
       console.error(err);
       return callback(err, null);
     }
-    fs.readFile(DATA, 'utf8', (err, d_data) => {
-      const course_list = JSON.parse(cl_data);  // list of sorted courses
-      const data = JSON.parse(d_data); // data object of courses
-
-      async.eachLimit(course_list, 100, function (course, callback1) {
+    data.getJSON(DATA, (err, datum) => {
+      async.eachLimit(course_list, 80, function (course, callback1) {
         const subject = course.subject;
         const catalog_number = course.catalog_number;
         waterloo.getReqs(subject, catalog_number, (err, res) => {
           if(err) return callback1();
-          data[subject][catalog_number]["prereqs"] = res.prereqs;
-          data[subject][catalog_number]["coreqs"] = res.coreqs;
-          data[subject][catalog_number]["antireqs"] = res.antireqs;
+          datum[subject][catalog_number]["prereqs"] = res.prereqs;
+          datum[subject][catalog_number]["coreqs"] = res.coreqs;
+          datum[subject][catalog_number]["antireqs"] = res.antireqs;
           console.log(subject + catalog_number + ", res: { prereqs: " + res.prereqs + ", coreqs: " + res.coreqs + ", antireqs: " + res.antireqs + "}");
           callback1();
         });
       }, function (err) {
-        const data_json = JSON.stringify(data);
-        fs.writeFile(DATA, data_json, 'utf8', (err) => {
+        const data_json = JSON.stringify(datum);
+        data.writeToFile(DATA, data_json, err => {
           if (err) {
             console.error(err);
             return callback(err, null);
@@ -109,6 +106,28 @@ function fillEntries (callback) {
           callback(null, data_json);
         });
       })
+    });
+  });
+}
+
+// Update a specific course
+function fillEntry(subject, cat_num, callback) {
+  data.getJSON(DATA, (err, datum) => {
+    waterloo.getReqs(subject, cat_num, (err, res) => {
+      if(err) return callback(err, null);
+      datum[subject][cat_num]["prereqs"] = res.prereqs;
+      datum[subject][cat_num]["coreqs"] = res.coreqs;
+      datum[subject][cat_num]["antireqs"] = res.antireqs;
+      console.log(subject + cat_num + ", res: { prereqs: " + res.prereqs + ", coreqs: " + res.coreqs + ", antireqs: " + res.antireqs + "}");
+      const data_json = JSON.stringify(datum);
+      data.writeToFile(DATA, data_json, err => {
+        if (err) {
+          console.error(err);
+          return callback(err, null);
+        }
+        console.log(subject + cat_num + " updated.");
+        callback(null, datum);
+      });
     });
   });
 }
@@ -126,5 +145,6 @@ module.exports = {
   DATA,
   updateCourseList,
   resetData,
-  fillEntries
+  fillEntries,
+  fillEntry
 }

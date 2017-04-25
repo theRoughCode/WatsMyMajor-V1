@@ -7,6 +7,7 @@ const data = require('./models/data');
 require('dotenv').config();
 
 const TERM = '1175';  // Spring 2017, 1179 = Fall 2017
+const coreqExceptions = ['HLTH333'];
 
 // instantiate client
 var uwclient = new watApi({
@@ -58,7 +59,7 @@ function getReqInfo(subject, course_number, callback) {
        const course = subject + ' ' + course_number + ' - ' + res.data.title;
        const description = res.data.description;
        var prereqs = reqs.prereqs;
-       var coreqs = (reqs.coreqs) ? reqs.coreqs.join() : null;
+       var coreqs = (reqs.coreqs) ? reqs.coreqs : null;
        var antireqs = (reqs.antireqs)
           ? ((Array.isArray(reqs.antireqs))
               ? reqs.antireqs.map(elem => {
@@ -66,29 +67,6 @@ function getReqInfo(subject, course_number, callback) {
               })
               : `${getLink(reqs.antireqs)}`)
           : reqs.antireqs;
-       if (coreqs !== null) {
-         // Edge case of "Oneof"
-         if(coreqs.includes("of")){
-           var num = coreqs.slice(0, 3);
-           switch(num) {
-             case 'One':
-               num = 1;
-               break;
-             case 'Two':
-               num = 2;
-               break;
-             case 'All':
-               num = null;
-               break;
-             default:
-               console.error("Error reading corequisites");
-           }
-           coreqs = coreqs.slice(5,-1).replace(/\s+/g,'').split(',');
-           coreqs.unshift(num);
-         } else {
-           coreqs = coreqs.replace(/or/g,', ').split(',');
-         }
-       }
        var crosslistings = res.data.crosslistings;
        crosslistings = (Array.isArray(crosslistings))
           ? crosslistings.map(cl => {
@@ -121,9 +99,24 @@ function getReqInfo(subject, course_number, callback) {
 
        // Corequisites
        const coreqsString = [];
-       if (Array.isArray(coreqs)) {
-         if (typeof coreqs[0] == 'number') coreqsString.push(pick(coreqs));
-         else coreqs.forEach(coreq => coreqsString.push(`${getLink(coreq)}`));
+       // Prerequisites
+       if(coreqs && coreqs[0] === 1) {
+         let temp = [coreqs[0]];
+         coreqs.slice(1).forEach(elem => {
+           if(Array.isArray(elem)) temp = temp.concat(elem.slice(1));
+           else temp = temp.concat(elem);
+         });
+         coreqs = temp;
+       }
+       if(Array.isArray(coreqs)){
+         // if first elem is a digit
+         if(!isNaN(coreqs[0])) coreqsString.push(pick(coreqs));
+         else {
+           coreqs.forEach(coreq => {
+             if (typeof coreq[0] == 'number') coreqsString.push(pick(coreq));
+             else coreqsString.push(`${getLink(coreq)}`);
+           });
+         }
        } else coreqsString.push(`${getLink(coreqs)}`);
 
        const data = {
@@ -167,18 +160,62 @@ function pick (arr) {
   return string + "</ul>";
 }
 
+// Converts weird data formatting to pick format
+function unpick(str) {
+  str = str.replace(/\s*and\s*/g,',');
+  if (str.includes('of')) {
+    var num = str.slice(0, 3);
+    switch(num) {
+      case 'One':
+        num = 1;
+        break;
+      case 'Two':
+        num = 2;
+        break;
+      case 'All':
+        num = null;
+        break;
+      default:
+        return str;
+    }
+    str = str.slice(6,-1).replace(/\s+/g,'').replace('/', ',').split(',');
+    str.unshift(num);
+    return str;
+  } else if (str.includes(' or')) { // ASSUMING ONLY ONE GROUP OF 'or'
+    var open = str.indexOf('(');
+    var close = str.indexOf(')');
+    // replace 'or' with comma and split into array
+    var fixed = str.slice(open + 1, close).replace(/or/g,', ').replace(/\s/g, '').split(',');
+    fixed.unshift(1); // add 1 to front
+    // Remove special chars
+    var checkSpecial = new RegExp('[^A-z0-9,]|\s', 'g');
+    fixed = [fixed];
+    // remove 'fixed' from original string and exclude commas before and after
+    str = str.slice(0, (open > 0) ? open - 1 : open).concat(str.slice(close + 2));
+    fixed.push(...str.replace(checkSpecial, '').split(','));
+    return fixed;
+  } else return str;
+}
+
 function getLink(course) {
   if(!course) return ``;
-  var checkSpecial = new RegExp('[^A-z0-9]', 'g');
-  course = course.replace(checkSpecial, '');
-  var index = course.search(/[0-9]/);
-  const subject = course.slice(0, index);
-  const cat_num = course.slice(index);
-  if (!subject || ! cat_num || checkSpecial.test(subject) || checkSpecial.test(cat_num)) {
-    return `${course}`;
-  } else {
-    return `<a href='/wat/${subject}/${cat_num}'>${course}</a>`;
-  }
+  // check for courses
+  var regCourse = /[A-Z]{2,5}\s*\d{3,4}[A-Z]*/g;
+  course = course.replace(regCourse, match => {
+    match = match.replace(/\s/g, '');  // remove white space
+    var index = match.search(/[0-9]/);
+    const subject = match.slice(0, index);
+    const cat_num = match.slice(index);
+    // check for non alpha-numeric chars (except spaces)
+    var checkSpecial = new RegExp('[^A-z0-9] | ^\s', 'g');
+    match = match.replace(checkSpecial, '');
+    if (!subject || ! cat_num || checkSpecial.test(subject) || checkSpecial.test(cat_num)) {
+      return `${match}`;
+    } else {
+      return `<a href='/wat/${subject}/${cat_num}'>${match}</a>`;
+    }
+  });
+  return course;
 }
 
 // Gets prerequisites from UW-API
@@ -210,12 +247,25 @@ function getReqs(subject, course_number, callback) {
       if(err) return callback(err, null);
       var coreqs, antireqs;
       if ((coreqs = res.data.corequisites)) {
-        coreqs = coreqs.replace(/\s+/g, '').split(',');
-        // add course subject for those without
-        coreqs.forEach((coreq, index) => {
-          if(!isNaN(coreq.charAt(0)))
-            coreqs[index] = coreqs[index - 1].replace(/[0-9]/g, '') + coreq;
-        });
+        // Edge case of "Oneof"
+        if (!Array.isArray(coreqs) && !coreqExceptions.includes(subject + course_number)) coreqs = unpick(coreqs);
+        // if coreqs is normal string
+        if (!Array.isArray(coreqs)) coreqs = [coreqs];
+        else {
+          coreqs.forEach((coreq, index) => {
+            if (typeof coreq === 'string') {
+              coreq = unpick(coreq);
+              // add course subject for those without
+              if (index > 0 && !isNaN(coreq.charAt(0))) {
+                var prev = coreqs[index - 1];
+                if (Array.isArray(prev)) prev = prev[prev.length - 1];  // get last elem
+                if(typeof prev === 'string')
+                  coreq = prev.replace(/[0-9]/g, '') + coreq;
+              }
+              coreqs[index] = coreq;
+            }
+          });
+        }
       }
       if ((antireqs = res.data.antirequisites)) {
         // remove whitespace and split by comma
@@ -223,7 +273,7 @@ function getReqs(subject, course_number, callback) {
         // add course subject for those without
         antireqs.forEach((antireq, index) => {
           if(!isNaN(antireq.charAt(0)) && index > 0)
-            antireqs[index] = antireqs[index - 1].replace(/[0-9]/g, '') + antireq;
+            antireqs[index] = antireqs[index - 1].match(/[A-Z]{3,5}/) + antireq;
         });
       }
 
@@ -325,7 +375,7 @@ function getParentReqs(subject, cat_num, callback) {
                   return true;
                 }
               }
-              if(elem.includes(course)) {  // Mandatory coreq
+              if(typeof elem === 'string' && elem.includes(course)) {  // Mandatory coreq
                 // optional if only course is specified
                 val.coreqs["optional"] = (elem.includes('or'));
                 return true;

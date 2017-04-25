@@ -28,6 +28,7 @@ routes.get('/wat/retrieve', function (req, res) {
   });
 })
 
+// update JSON data
 routes.get('/update/:type', function (req, res) {
   const type = req.params.type.toLowerCase();
   if (type === 'fill') {
@@ -52,6 +53,14 @@ routes.get('/update/:type', function (req, res) {
     });
   }
 });
+
+routes.get('/update/:subject/:cat_num', function (req, res) {
+  const subject = req.params.subject.toUpperCase();
+  const cat_num = req.params.cat_num;
+  update.fillEntry(subject, cat_num, (err, json) => {
+    res.send(json[`${subject}`][`${cat_num}`]);
+  });
+})
 
 routes.get('/get/:file', function (req, res) {
   const file = req.params.file.toUpperCase();
@@ -102,10 +111,7 @@ routes.get('/test/:subject/:cat_num', function(req, res) {
   const subject = req.params.subject.toUpperCase();
   const cat_num = req.params.cat_num;
 
-  data.getCourseData(subject, cat_num, reqs => {
-    console.log(reqs);
-    res.send(reqs);
-  });
+  waterloo.getReqs(subject, cat_num, (err, json) => res.send(json));
 })
 
 module.exports = routes;

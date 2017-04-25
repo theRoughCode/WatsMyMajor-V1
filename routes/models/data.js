@@ -13,8 +13,7 @@ function getJSON(filepath, callback) {
       console.error(err);
       callback(err, null)
     }
-    const json_data = JSON.parse(data);
-    callback(null, json_data);
+    callback(null, JSON.parse(data));
   });
 }
 
@@ -51,10 +50,22 @@ function getCourseData(subject, cat_num, callback) {
   });
 }
 
+// write to JSON
+function writeToFile(file, json, callback) {
+  fs.writeFile(file, json, 'utf8', (err) => {
+    if (err) {
+      console.error(err);
+      return callback(err);
+    }
+    callback(null);
+  });
+}
+
 module.exports = {
   COURSE_LIST,
   DATA,
   getJSON,
   filter,
+  writeToFile,
   getCourseData
 }
