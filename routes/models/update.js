@@ -84,7 +84,7 @@ function fillEntries (callback) {
       return callback(err, null);
     }
     data.getJSON(DATA, (err, datum) => {
-      async.eachLimit(course_list, 80, function (course, callback1) {
+      async.eachLimit(course_list, 100, function (course, callback1) {
         const subject = course.subject;
         const catalog_number = course.catalog_number;
         waterloo.getReqs(subject, catalog_number, (err, res) => {
