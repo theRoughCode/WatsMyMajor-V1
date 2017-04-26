@@ -25,48 +25,60 @@
   </div>
   {{#if prereqs}}
     <h2>Prerequisites:</h2>
-    {{#each string.prereqs}}
-      <li>{{{ this }}}</li>
-    {{/each}}
+    <ul class="reqs">
+      {{#each string.prereqs}}
+        <li>{{{ this }}}</li>
+      {{/each}}
+    </ul>
   {{/if}}
   {{#if coreqs}}
     <h2>Corequisites</h2>
-    {{#each string.coreqs}}
-      <li>{{{ this }}}</li>
-    {{/each}}
+    <ul class="reqs">
+      {{#each string.coreqs}}
+        <li>{{{ this }}}</li>
+      {{/each}}
+    </ul>
   {{/if}}
   {{#if antireqs}}
     <h2>Antirequisites</h2>
-    {{#each antireqs}}
-      <li>{{{ this }}}</li>
-    {{/each}}
+    <ul class="reqs">
+      {{#each antireqs}}
+        <li>{{{ this }}}</li>
+      {{/each}}
+    </ul>
   {{/if}}
   {{#if crosslistings}}
     <h2>Cross Listings</h2>
-    <li>{{{ crosslistings }}}</li>
+    <ul class="reqs">
+      <li>{{{ crosslistings }}}</li>
+    </ul>
   {{/if}}
   {{#if parPrereq}}
     <h2>Requires {{ subject }} {{ catalog_number }} As A Prerequisite</h2>
-    {{#each parPrereq}}
-      <li><a href="/wat/{{ this.subject }}/{{ this.cat_num }}">{{ this.subject }} {{ this.cat_num }}</a>
-        {{#unless this.optional}}
-          [Mandatory]
-        {{/unless}}
-        {{#if this.alternate}}
-          <i>(Can also take: {{ this.alternate }})</i>
-        {{/if}}
-      </li>
-    {{/each}}
+    <ul class="reqs">
+      {{#each parPrereq}}
+        <li><a href="/wat/{{ this.subject }}/{{ this.cat_num }}">{{ this.subject }} {{ this.cat_num }}</a>
+          {{#unless this.optional}}
+            [Mandatory]
+          {{/unless}}
+          {{#if this.alternate}}
+            <i>(Can also take: {{ this.alternate }})</i>
+          {{/if}}
+        </li>
+      {{/each}}
+    </ul>
   {{/if}}
   {{#if parCoreq}}
     <h2>Requires {{ subject }} {{ catalog_number }} As A Corequisite</h2>
-    {{#each parCoreq}}
-      <li><a href="/wat/{{ this.subject }}/{{ this.cat_num }}">{{ this.subject }} {{ this.cat_num }}</a>
-        {{#unless this.optional}}
-          (Mandatory)
-        {{/unless}}
-      </li>
-    {{/each}}
+    <ul class="reqs">
+      {{#each parCoreq}}
+        <li><a href="/wat/{{ this.subject }}/{{ this.cat_num }}">{{ this.subject }} {{ this.cat_num }}</a>
+          {{#unless this.optional}}
+            (Mandatory)
+          {{/unless}}
+        </li>
+      {{/each}}
+    </ul>
   {{/if}}
 </body>
 </html>

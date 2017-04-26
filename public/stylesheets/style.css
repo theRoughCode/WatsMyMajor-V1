@@ -151,3 +151,25 @@ span.population {
 .hl {
  background:#ffc600;
 }
+
+h2 {
+  margin-bottom: 0;
+}
+
+ul {
+  display: table-cell;
+  padding: none;
+}
+
+li {
+  padding: 0.2em 0;
+}
+
+.reqs a {
+  transition: font-size 0.2s ease, color 0.2s linear;
+}
+
+.reqs a:hover {
+  color: #586591;
+  font-size: 21px;
+}
