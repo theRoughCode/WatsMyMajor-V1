@@ -17,6 +17,19 @@ body {
   margin-bottom: 50px;
 }
 
+h2 {
+  margin-bottom: 0;
+}
+
+ul {
+  display: table-cell;
+  padding: none;
+}
+
+li {
+  padding: 0.2em 0;
+}
+
 a {
   text-decoration: none;
   color:black;
@@ -103,13 +116,14 @@ input.search {
 }
 
 .suggestions {
- margin: 0;
- padding: 0;
- position: relative;
- /*height:200px;
- overflow-x: hidden;
- overflow-y:auto;
- perspective:600px;*/
+   display: block;
+   margin: 0;
+   padding: 0;
+   position: relative;
+   /*height:200px;
+   overflow-x: hidden;
+   overflow-y:auto;
+   perspective:600px;*/
 }
 
 .suggestions.active {
@@ -150,19 +164,6 @@ span.population {
 
 .hl {
  background:#ffc600;
-}
-
-h2 {
-  margin-bottom: 0;
-}
-
-ul {
-  display: table-cell;
-  padding: none;
-}
-
-li {
-  padding: 0.2em 0;
 }
 
 .reqs a {
