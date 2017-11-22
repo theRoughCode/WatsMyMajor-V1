@@ -9,3 +9,6 @@ Tree
   - Fix URL links (eg. PHYS 242, amath 361, chem 335l, afm 321)
   - implement insertion of subject earlier
   - obfuscate JS code via uglifyjs
+
+- Update term-specific courses (i.e. Hist 291)
+	- scrape from uwflow/adm.uwaterloo.ca
